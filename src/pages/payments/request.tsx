@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -207,10 +206,11 @@ export default function RequestPayment() {
         purposes,
         photos,
         status: "pending",
-        requestedBy: user?.name || "Anonymous",
+        requestedBy: user?.id || "Anonymous",
         requestedAt: new Date().toISOString(),
       };
       
+      // Save the payment request
       savePaymentRequest(paymentRequest);
       
       // Update the progress entry with this payment request ID
@@ -219,7 +219,7 @@ export default function RequestPayment() {
         const entry = progressEntries.find(entry => entry.id === progressId);
         
         if (entry) {
-          const updatedEntry = {
+          const updatedEntry: ProgressEntry = {
             ...entry,
             paymentRequests: [...(entry.paymentRequests || []), paymentRequest.id]
           };

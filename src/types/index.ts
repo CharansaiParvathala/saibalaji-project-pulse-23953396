@@ -102,7 +102,7 @@ export interface ProgressEntry {
       end: MeterReading;
     };
   };
-  paymentRequests: PaymentRequest[];
+  paymentRequests: string[]; // Changed from PaymentRequest[] to string[] to store IDs
   submittedBy: string; // user ID
   submittedAt: string;
   status: "draft" | "submitted" | "locked" | "correction-requested";
