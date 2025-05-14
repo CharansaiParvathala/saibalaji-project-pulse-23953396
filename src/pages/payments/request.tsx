@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { generateId, getProjects, getProgressEntries, savePaymentRequest, addPaymentRequest, updateProgressEntry } from "@/lib/storage";
+import { generateId, getProjects, getProgressEntries, savePaymentRequest, updateProgressEntry } from "@/lib/storage";
 import { getCurrentLocation } from "@/lib/geolocation";
 import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry, PaymentRequest } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -187,25 +188,30 @@ export default function RequestPayment() {
       
       const projectId = selectedProject;
       const progressId = selectedEntry;
-      const currentLocation = position;
+      // Get current location
+      let currentLocation: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
+      try {
+        currentLocation = await getCurrentLocation();
+      } catch (error) {
+        console.error("Error getting location:", error);
+      }
       
-      const requests = getPaymentRequests();
-      const newRequestId = requests.length > 0 ? Math.max(...requests.map(r => parseInt(r.id))) + 1 : 1;
+      // Create a new payment request ID
+      const newRequestId = generateId();
       
       const paymentRequest: PaymentRequest = {
-        id: newRequestId.toString(),
+        id: newRequestId,
+        projectId,
         amount: parseFloat(amount),
         description,
         purposes,
         photos,
-        projectId,
         status: "pending",
         requestedBy: user?.name || "Anonymous",
         requestedAt: new Date().toISOString(),
-        location: currentLocation,
       };
       
-      addPaymentRequest(paymentRequest);
+      savePaymentRequest(paymentRequest);
       
       // Update the progress entry with this payment request ID
       if (progressId) {
