@@ -1,5 +1,8 @@
 
 import { toast as sonnerToast } from "sonner";
-import { useToast as useShadcnToast } from "@/components/ui/toast";
+import { toast as shadcnToast } from "@/components/ui/use-toast";
+
 export const toast = sonnerToast;
-export const useToast = useShadcnToast;
+export const useToast = () => {
+  return shadcnToast;
+};

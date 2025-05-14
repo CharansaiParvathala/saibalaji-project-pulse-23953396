@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -35,8 +36,9 @@ export default function SubmissionDetails() {
       
       // Get all payment requests associated with this entry
       const allPaymentRequests = getPaymentRequests();
+      const relatedRequestIds = entryData.paymentRequests || [];
       const requests = allPaymentRequests.filter(
-        request => entryData.paymentRequests.includes(request.id)
+        request => relatedRequestIds.includes(request.id)
       );
       setPaymentRequests(requests);
     }
