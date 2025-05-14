@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { generateId, getProjects, getProgressEntries, savePaymentRequest } from "@/lib/storage";
+import { generateId, getProjects, getProgressEntries, savePaymentRequest, addPaymentRequest, updateProgressEntry } from "@/lib/storage";
 import { getCurrentLocation } from "@/lib/geolocation";
-import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry } from "@/types";
+import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry, PaymentRequest } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function RequestPayment() {
@@ -185,34 +185,51 @@ export default function RequestPayment() {
     try {
       setLoading(true);
       
-      const paymentRequest = {
-        id: generateId(),
-        projectId: selectedProject,
-        purposes: purposes,
+      const projectId = selectedProject;
+      const progressId = selectedEntry;
+      const currentLocation = position;
+      
+      const requests = getPaymentRequests();
+      const newRequestId = requests.length > 0 ? Math.max(...requests.map(r => parseInt(r.id))) + 1 : 1;
+      
+      const paymentRequest: PaymentRequest = {
+        id: newRequestId.toString(),
         amount: parseFloat(amount),
-        description: description,
-        photos: photos,
-        status: "pending" as const,
-        requestedBy: user.id,
+        description,
+        purposes,
+        photos,
+        projectId,
+        status: "pending",
+        requestedBy: user?.name || "Anonymous",
         requestedAt: new Date().toISOString(),
+        location: currentLocation,
       };
       
-      savePaymentRequest(paymentRequest);
+      addPaymentRequest(paymentRequest);
       
-      // Update the progress entry to include this payment request
-      const entryToUpdate = getProgressEntries().find(entry => entry.id === selectedEntry);
-      if (entryToUpdate) {
-        entryToUpdate.paymentRequests.push(paymentRequest.id);
-        // Here we would update the progress entry in storage
-        // For simplicity, we're skipping this step as it's not fully implemented
+      // Update the progress entry with this payment request ID
+      if (progressId) {
+        const progressEntries = getProgressEntries();
+        const entry = progressEntries.find(entry => entry.id === progressId);
+        
+        if (entry) {
+          const updatedEntry = {
+            ...entry,
+            paymentRequests: [...(entry.paymentRequests || []), paymentRequest.id]
+          };
+          
+          updateProgressEntry(updatedEntry);
+        }
       }
       
+      // Show success message
       toast({
-        title: "Success",
-        description: "Payment request submitted",
+        title: "Payment request submitted",
+        description: "Your request has been submitted for approval."
       });
       
-      navigate("/dashboard");
+      // Navigate back to the submissions page
+      navigate("/submissions");
     } catch (error) {
       console.error("Error submitting payment request:", error);
       toast({
