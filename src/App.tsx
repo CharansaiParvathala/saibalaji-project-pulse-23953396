@@ -28,8 +28,11 @@ import Submissions from "./pages/submissions/index";
 import SubmissionDetails from "./pages/submissions/[id]";
 import Statistics from "./pages/statistics";
 import VehicleRegistry from "./pages/vehicles/index";
+import VehicleDetails from "./pages/vehicles/[id]";
+import EditVehicle from "./pages/vehicles/edit/[id]";
 import AddVehicle from "./pages/vehicles/add";
 import ManageUsers from "./pages/users/index";
+import EditUser from "./pages/users/edit/[id]";
 import AddUser from "./pages/users/add";
 
 const queryClient = new QueryClient();
@@ -80,11 +83,7 @@ const App = () => (
               />
               <Route
                 path="/progress/add/:projectId"
-                element={
-                  <Layout requiredRoles={["leader", "admin"]}>
-                    <AddProgress />
-                  </Layout>
-                }
+                element={<AddProgress />}
               />
               <Route
                 path="/payments/request"
@@ -136,8 +135,20 @@ const App = () => (
                 element={<AddUser />}
               />
               <Route
+                path="/users/edit/:id"
+                element={<EditUser />}
+              />
+              <Route
                 path="/vehicles"
                 element={<VehicleRegistry />}
+              />
+              <Route
+                path="/vehicles/:id"
+                element={<VehicleDetails />}
+              />
+              <Route
+                path="/vehicles/edit/:id"
+                element={<EditVehicle />}
               />
               <Route
                 path="/vehicles/add"

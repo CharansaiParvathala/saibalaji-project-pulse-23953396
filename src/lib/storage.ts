@@ -1,3 +1,4 @@
+
 import { User, Project, Vehicle, Driver, ProgressEntry, PaymentRequest, Notification } from "@/types";
 
 // Local Storage keys
@@ -94,6 +95,18 @@ export function saveVehicle(vehicle: Vehicle): Vehicle {
   vehicles.push(vehicle);
   saveToStorage(STORAGE_KEYS.VEHICLES, vehicles);
   return vehicle;
+}
+
+export function updateVehicle(updatedVehicle: Vehicle): Vehicle {
+  const vehicles = getVehicles();
+  const index = vehicles.findIndex((vehicle) => vehicle.id === updatedVehicle.id);
+  
+  if (index !== -1) {
+    vehicles[index] = updatedVehicle;
+    saveToStorage(STORAGE_KEYS.VEHICLES, vehicles);
+  }
+  
+  return updatedVehicle;
 }
 
 // Drivers

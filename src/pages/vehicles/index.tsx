@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getVehicles } from "@/lib/storage";
+import { generateDemoData } from "@/lib/demoData";
 import { Vehicle } from "@/types";
 
 export default function VehicleRegistry() {
@@ -13,6 +14,10 @@ export default function VehicleRegistry() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Generate demo data if it doesn't exist
+    generateDemoData();
+    
+    // Load vehicles
     setVehicles(getVehicles());
     setLoading(false);
   }, []);
@@ -45,31 +50,50 @@ export default function VehicleRegistry() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vehicles.map((vehicle) => (
-              <Card key={vehicle.id}>
-                <CardHeader>
-                  <CardTitle>{vehicle.model}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><strong>Registration:</strong> {vehicle.registrationNumber}</p>
-                    <p><strong>Pollution Certificate:</strong> {vehicle.pollutionCertificate.number}</p>
-                    <p><strong>Pollution Expires:</strong> {new Date(vehicle.pollutionCertificate.expiryDate).toLocaleDateString()}</p>
-                    <p><strong>Fitness Certificate:</strong> {vehicle.fitnessCertificate.number}</p>
-                    <p><strong>Fitness Expires:</strong> {new Date(vehicle.fitnessCertificate.expiryDate).toLocaleDateString()}</p>
-                    
-                    <div className="pt-4">
-                      <Link to={`/vehicles/${vehicle.id}`}>
-                        <Button variant="outline" className="w-full">
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </Button>
-                      </Link>
+            {vehicles.map((vehicle) => {
+              const isPollutionExpired = new Date(vehicle.pollutionCertificate.expiryDate) < new Date();
+              const isFitnessExpired = new Date(vehicle.fitnessCertificate.expiryDate) < new Date();
+              
+              return (
+                <Card key={vehicle.id}>
+                  <CardHeader>
+                    <CardTitle>{vehicle.model}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p><strong>Registration:</strong> {vehicle.registrationNumber}</p>
+                      <p>
+                        <strong>Pollution Certificate:</strong> 
+                        <span className={`ml-2 px-2 py-0.5 rounded text-xs ${isPollutionExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                          {isPollutionExpired ? 'Expired' : 'Valid'}
+                        </span>
+                      </p>
+                      <p>
+                        <strong>Fitness Certificate:</strong>
+                        <span className={`ml-2 px-2 py-0.5 rounded text-xs ${isFitnessExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                          {isFitnessExpired ? 'Expired' : 'Valid'}
+                        </span>
+                      </p>
+                      
+                      <div className="flex space-x-2 pt-4">
+                        <Link to={`/vehicles/${vehicle.id}`} className="flex-1">
+                          <Button variant="outline" className="w-full">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </Button>
+                        </Link>
+                        <Link to={`/vehicles/edit/${vehicle.id}`} className="flex-1">
+                          <Button variant="outline" className="w-full">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

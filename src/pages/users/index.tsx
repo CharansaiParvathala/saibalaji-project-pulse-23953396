@@ -1,41 +1,38 @@
 
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Plus, Edit } from "lucide-react";
 import { getUsers } from "@/lib/storage";
+import { generateDemoData } from "@/lib/demoData";
 import { User } from "@/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 export default function ManageUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Generate demo data if it doesn't exist
+    generateDemoData();
+    
+    // Load users
     setUsers(getUsers());
     setLoading(false);
   }, []);
 
-  const getRoleColor = (role: string) => {
+  const getRoleBadgeClass = (role: string) => {
     switch (role) {
-      case "leader":
+      case "admin":
+        return "bg-purple-100 text-purple-800";
+      case "owner":
         return "bg-blue-100 text-blue-800";
       case "checker":
         return "bg-green-100 text-green-800";
-      case "owner":
-        return "bg-purple-100 text-purple-800";
-      case "admin":
-        return "bg-red-100 text-red-800";
+      case "leader":
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -45,12 +42,7 @@ export default function ManageUsers() {
     <Layout requiredRoles={["admin"]}>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Manage Users</h1>
-            <p className="text-muted-foreground">
-              Total users: {users.length}
-            </p>
-          </div>
+          <h1 className="text-3xl font-bold">Manage Users</h1>
           <Link to="/users/add">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -58,10 +50,10 @@ export default function ManageUsers() {
             </Button>
           </Link>
         </div>
-        
+
         <Card>
           <CardHeader>
-            <CardTitle>Users</CardTitle>
+            <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -69,7 +61,7 @@ export default function ManageUsers() {
                 <p>Loading users...</p>
               </div>
             ) : users.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="text-center py-8">
                 <p className="text-muted-foreground mb-4">No users found</p>
                 <Link to="/users/add">
                   <Button>Add Your First User</Button>
@@ -82,8 +74,7 @@ export default function ManageUsers() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -92,14 +83,14 @@ export default function ManageUsers() {
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                        <span className={`px-2 py-1 rounded text-xs ${getRoleBadgeClass(user.role)}`}>
                           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </div>
+                        </span>
                       </TableCell>
-                      <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Link to={`/users/${user.id}`}>
+                      <TableCell className="text-right">
+                        <Link to={`/users/edit/${user.id}`}>
                           <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
                         </Link>
