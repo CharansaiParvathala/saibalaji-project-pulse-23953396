@@ -83,6 +83,12 @@ export interface PaymentRequest {
   reviewedAt?: string;
   comments?: string;
   paymentDate?: string;
+  statusHistory?: {
+    status: "pending" | "approved" | "rejected" | "paid" | "scheduled";
+    changedBy: string; // user ID
+    changedAt: string;
+    comments?: string;
+  }[];
 }
 
 export interface ProgressEntry {
@@ -112,4 +118,16 @@ export interface ProgressEntry {
     requestedBy: string; // user ID
   };
   isLocked: boolean;
+}
+
+// New interface for notifications
+export interface Notification {
+  id: string;
+  userId: string; // recipient
+  type: "payment_status" | "progress_status" | "correction_request";
+  title: string;
+  message: string;
+  relatedId: string; // ID of the related entity (payment, progress, etc.)
+  isRead: boolean;
+  createdAt: string;
 }

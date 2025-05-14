@@ -23,6 +23,7 @@ import ProjectDetails from "./pages/projects/[id]";
 import AddProgress from "./pages/progress/add";
 import RequestPayment from "./pages/payments/request";
 import ApprovePayments from "./pages/payments/approve";
+import PaymentHistory from "./pages/payments/history";
 import Submissions from "./pages/submissions/index";
 import SubmissionDetails from "./pages/submissions/[id]";
 import Statistics from "./pages/statistics";
@@ -88,6 +89,10 @@ const App = () => (
               <Route
                 path="/payments/request"
                 element={<RequestPayment />}
+              />
+              <Route
+                path="/payments/history"
+                element={<PaymentHistory />}
               />
               
               {/* Checker specific routes */}

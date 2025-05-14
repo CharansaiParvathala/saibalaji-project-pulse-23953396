@@ -1,27 +1,34 @@
 
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAuth } from "@/hooks/useAuth"; // We'll create this later
+import { useAuth } from "@/hooks/useAuth";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { Link } from "react-router-dom";
+import { Menu } from "lucide-react";
 
 export function Header() {
-  const { user } = useAuth(); // We'll create this hook later
+  const { user } = useAuth();
   
   return (
-    <header className="border-b py-2 px-4 bg-background">
-      <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl">
-            SB
-          </div>
-          <h1 className="text-xl md:text-2xl font-bold m-0 mb-0">Sai Balaji</h1>
+    <header className="border-b bg-background sticky top-0 z-10">
+      <div className="container mx-auto py-3 px-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <button className="mr-4 text-muted-foreground md:hidden">
+            <Menu className="h-6 w-6" />
+          </button>
+          <Link to="/" className="font-bold text-lg text-primary">
+            SAI BALAJI
+          </Link>
         </div>
         
-        <div className="flex items-center gap-4">
-          {user && (
-            <span className="hidden md:inline text-sm text-muted-foreground">
-              Welcome, {user.name}
-            </span>
-          )}
+        <div className="flex items-center gap-2">
+          {user && <NotificationCenter />}
           <ThemeToggle />
+          {!user && (
+            <Link to="/login">
+              <Button>Sign In</Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>

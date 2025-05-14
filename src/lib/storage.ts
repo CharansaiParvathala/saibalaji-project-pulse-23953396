@@ -1,5 +1,4 @@
-
-import { User, Project, Vehicle, Driver, ProgressEntry, PaymentRequest } from "@/types";
+import { User, Project, Vehicle, Driver, ProgressEntry, PaymentRequest, Notification } from "@/types";
 
 // Local Storage keys
 const STORAGE_KEYS = {
@@ -9,6 +8,7 @@ const STORAGE_KEYS = {
   DRIVERS: "sai-balaji-drivers",
   PROGRESS_ENTRIES: "sai-balaji-progress-entries",
   PAYMENT_REQUESTS: "sai-balaji-payment-requests",
+  NOTIFICATIONS: "sai-balaji-notifications",
 };
 
 // Helper to generate IDs
@@ -142,7 +142,34 @@ export function updateProgressEntry(updatedEntry: ProgressEntry): ProgressEntry 
   return updatedEntry;
 }
 
-// Payment Requests
+// Notifications
+export function getNotifications(): Notification[] {
+  return getFromStorage<Notification>(STORAGE_KEYS.NOTIFICATIONS);
+}
+
+export function getNotificationsByUser(userId: string): Notification[] {
+  const notifications = getNotifications();
+  return notifications.filter(notification => notification.userId === userId);
+}
+
+export function saveNotification(notification: Notification): Notification {
+  const notifications = getNotifications();
+  notifications.push(notification);
+  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
+  return notification;
+}
+
+export function markNotificationAsRead(id: string): void {
+  const notifications = getNotifications();
+  const index = notifications.findIndex((notification) => notification.id === id);
+  
+  if (index !== -1) {
+    notifications[index].isRead = true;
+    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
+  }
+}
+
+// Payment Requests with history tracking
 export function getPaymentRequests(): PaymentRequest[] {
   return getFromStorage<PaymentRequest>(STORAGE_KEYS.PAYMENT_REQUESTS);
 }
@@ -154,6 +181,16 @@ export function getPaymentRequestsByStatus(status: PaymentRequest["status"]): Pa
 
 export function savePaymentRequest(request: PaymentRequest): PaymentRequest {
   const requests = getPaymentRequests();
+  
+  // Ensure statusHistory exists
+  if (!request.statusHistory) {
+    request.statusHistory = [{
+      status: request.status,
+      changedBy: request.requestedBy,
+      changedAt: request.requestedAt,
+    }];
+  }
+  
   requests.push(request);
   saveToStorage(STORAGE_KEYS.PAYMENT_REQUESTS, requests);
   return request;
@@ -164,10 +201,38 @@ export function updatePaymentRequest(updatedRequest: PaymentRequest): PaymentReq
   const index = requests.findIndex((request) => request.id === updatedRequest.id);
   
   if (index !== -1) {
+    // Add status to history if it changed
+    const oldRequest = requests[index];
+    if (oldRequest.status !== updatedRequest.status) {
+      if (!updatedRequest.statusHistory) {
+        updatedRequest.statusHistory = [];
+      }
+      
+      updatedRequest.statusHistory.push({
+        status: updatedRequest.status,
+        changedBy: updatedRequest.reviewedBy || "system",
+        changedAt: new Date().toISOString(),
+        comments: updatedRequest.comments,
+      });
+      
+      // Create notification for payment requester
+      const notification: Notification = {
+        id: generateId(),
+        userId: oldRequest.requestedBy,
+        type: "payment_status",
+        title: `Payment Request ${updatedRequest.status.charAt(0).toUpperCase() + updatedRequest.status.slice(1)}`,
+        message: `Your payment request of ₹${updatedRequest.amount.toFixed(2)} has been ${updatedRequest.status}`,
+        relatedId: updatedRequest.id,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      
+      saveNotification(notification);
+    }
+    
     requests[index] = updatedRequest;
     saveToStorage(STORAGE_KEYS.PAYMENT_REQUESTS, requests);
   }
   
   return updatedRequest;
 }
-

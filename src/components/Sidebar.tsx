@@ -8,7 +8,11 @@ import {
   BarChart, 
   Users,
   Truck,
-  LogOut
+  LogOut,
+  Clock,
+  FileText,
+  History,
+  CalendarCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,17 +26,18 @@ export function Sidebar() {
     leader: [
       { to: "/dashboard", icon: Home, label: "Dashboard" },
       { to: "/projects/create", icon: PlusCircle, label: "Create Project" },
-      { to: "/progress", icon: BarChart, label: "Add Progress" },
+      { to: "/progress", icon: Clock, label: "Add Progress" },
       { to: "/payments/request", icon: CreditCard, label: "Request Payment" },
+      { to: "/payments/history", icon: History, label: "Payment History" },
     ],
     checker: [
       { to: "/dashboard", icon: Home, label: "Dashboard" },
-      { to: "/submissions", icon: CheckCircle, label: "Review Submissions" },
-      { to: "/history", icon: BarChart, label: "History" },
+      { to: "/submissions", icon: FileText, label: "Review Submissions" },
+      { to: "/history", icon: History, label: "Review History" },
     ],
     owner: [
       { to: "/dashboard", icon: Home, label: "Dashboard" },
-      { to: "/payments/approve", icon: CreditCard, label: "Approve Payments" },
+      { to: "/payments/approve", icon: CalendarCheck, label: "Payment Management" },
       { to: "/statistics", icon: BarChart, label: "Statistics" },
     ],
     admin: [
