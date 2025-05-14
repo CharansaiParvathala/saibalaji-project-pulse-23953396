@@ -18,6 +18,18 @@ import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import CreateProject from "./pages/projects/create";
+import Projects from "./pages/projects/index";
+import ProjectDetails from "./pages/projects/[id]";
+import AddProgress from "./pages/progress/add";
+import RequestPayment from "./pages/payments/request";
+import ApprovePayments from "./pages/payments/approve";
+import Submissions from "./pages/submissions/index";
+import SubmissionDetails from "./pages/submissions/[id]";
+import Statistics from "./pages/statistics";
+import VehicleRegistry from "./pages/vehicles/index";
+import AddVehicle from "./pages/vehicles/add";
+import ManageUsers from "./pages/users/index";
+import AddUser from "./pages/users/add";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +64,10 @@ const App = () => (
                 } 
               />
               
+              {/* Project routes */}
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetails />} />
+              
               {/* Leader specific routes */}
               <Route
                 path="/projects/create"
@@ -62,50 +78,26 @@ const App = () => (
                 }
               />
               <Route
-                path="/progress"
+                path="/progress/add/:projectId"
                 element={
                   <Layout requiredRoles={["leader", "admin"]}>
-                    <div className="panel">
-                      <h1>Add Progress</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
+                    <AddProgress />
                   </Layout>
                 }
               />
               <Route
                 path="/payments/request"
-                element={
-                  <Layout requiredRoles={["leader", "admin"]}>
-                    <div className="panel">
-                      <h1>Request Payment</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<RequestPayment />}
               />
               
               {/* Checker specific routes */}
               <Route
                 path="/submissions"
-                element={
-                  <Layout requiredRoles={["checker", "admin"]}>
-                    <div className="panel">
-                      <h1>Review Submissions</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<Submissions />}
               />
               <Route
                 path="/submissions/:id"
-                element={
-                  <Layout requiredRoles={["checker", "admin"]}>
-                    <div className="panel">
-                      <h1>Submission Details</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<SubmissionDetails />}
               />
               <Route
                 path="/history"
@@ -122,49 +114,29 @@ const App = () => (
               {/* Owner specific routes */}
               <Route
                 path="/payments/approve"
-                element={
-                  <Layout requiredRoles={["owner", "admin"]}>
-                    <div className="panel">
-                      <h1>Approve Payments</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<ApprovePayments />}
               />
               <Route
                 path="/statistics"
-                element={
-                  <Layout requiredRoles={["owner", "admin"]}>
-                    <div className="panel">
-                      <h1>Statistics</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<Statistics />}
               />
               
               {/* Admin specific routes */}
               <Route
                 path="/users"
-                element={
-                  <Layout requiredRoles={["admin"]}>
-                    <div className="panel">
-                      <h1>Manage Users</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<ManageUsers />}
+              />
+              <Route
+                path="/users/add"
+                element={<AddUser />}
               />
               <Route
                 path="/vehicles"
-                element={
-                  <Layout requiredRoles={["admin"]}>
-                    <div className="panel">
-                      <h1>Vehicle Registry</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
-                  </Layout>
-                }
+                element={<VehicleRegistry />}
+              />
+              <Route
+                path="/vehicles/add"
+                element={<AddVehicle />}
               />
 
               {/* Catch-all route */}
