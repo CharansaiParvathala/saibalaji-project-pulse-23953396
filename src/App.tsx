@@ -17,6 +17,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
+import CreateProject from "./pages/projects/create";
 
 const queryClient = new QueryClient();
 
@@ -56,10 +57,7 @@ const App = () => (
                 path="/projects/create"
                 element={
                   <Layout requiredRoles={["leader", "admin"]}>
-                    <div className="panel">
-                      <h1>Create Project</h1>
-                      <p>This page will be implemented in future iterations.</p>
-                    </div>
+                    <CreateProject />
                   </Layout>
                 }
               />

@@ -1,54 +1,40 @@
-
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Clock, CheckCircle, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-
-export default function Dashboard() {
-  const { user } = useAuth();
-
-  if (!user) {
-    return null;
-  }
-
-  const dashboards = {
-    leader: <LeaderDashboard />,
-    checker: <CheckerDashboard />,
-    owner: <OwnerDashboard />,
-    admin: <AdminDashboard />,
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
-        <p className="text-muted-foreground">
-          You are logged in as a {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-        </p>
-      </div>
-      
-      {dashboards[user.role]}
-    </div>
-  );
-}
+import { getProjects } from "@/lib/storage";
 
 function LeaderDashboard() {
   // Mock data for demonstration
   const activeProjects = 3;
   const pendingPayments = 2;
   const lastUpload = "2 hours ago";
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    
+    // Load projects from storage
+    const allProjects = getProjects();
+    const userProjects = allProjects.filter(project => project.createdBy === user.id);
+    setProjects(userProjects);
+    setLoading(false);
+  }, [user]);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Active Projects</CardTitle>
-            <CardDescription>Your ongoing work</CardDescription>
+            <CardTitle className="text-lg">My Projects</CardTitle>
+            <CardDescription>Your created projects</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{activeProjects}</p>
+            <p className="text-3xl font-bold">{projects.length}</p>
             <Link to="/projects">
               <Button variant="link" className="px-0">View all projects</Button>
             </Link>
@@ -112,41 +98,41 @@ function LeaderDashboard() {
         </Card>
         
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle>My Projects</CardTitle>
+            <Link to="/projects">
+              <Button variant="ghost" size="sm">View All</Button>
+            </Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                </div>
-                <div>
-                  <p className="font-medium">Project #123 Progress Updated</p>
-                  <p className="text-sm text-muted-foreground">Today at 10:30 AM</p>
-                </div>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <p>Loading projects...</p>
               </div>
-              
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-5 w-5 text-amber-500 mr-2" />
-                </div>
-                <div>
-                  <p className="font-medium">Payment Request Pending</p>
-                  <p className="text-sm text-muted-foreground">Yesterday at 4:15 PM</p>
-                </div>
+            ) : projects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="text-muted-foreground mb-4">No projects created yet</p>
+                <Link to="/projects/create">
+                  <Button>Create Your First Project</Button>
+                </Link>
               </div>
-              
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                </div>
-                <div>
-                  <p className="font-medium">New Project Created</p>
-                  <p className="text-sm text-muted-foreground">May 12, 2025</p>
-                </div>
+            ) : (
+              <div className="space-y-4">
+                {projects.slice(0, 5).map((project) => (
+                  <div key={project.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium">{project.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {project.numWorkers} workers · Created {new Date(project.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Link to={`/projects/${project.id}`}>
+                      <Button variant="outline" size="sm">View</Button>
+                    </Link>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -434,6 +420,34 @@ function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
+  const dashboards = {
+    leader: <LeaderDashboard />,
+    checker: <CheckerDashboard />,
+    owner: <OwnerDashboard />,
+    admin: <AdminDashboard />,
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
+        <p className="text-muted-foreground">
+          You are logged in as a {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+        </p>
+      </div>
+      
+      {dashboards[user.role]}
     </div>
   );
 }
