@@ -1,4 +1,5 @@
 
-import { useToast, toast } from "@/hooks/use-toast";
-
-export { useToast, toast };
+import { toast as sonnerToast } from "sonner";
+import { useToast as useShadcnToast } from "@/components/ui/toast";
+export const toast = sonnerToast;
+export const useToast = useShadcnToast;

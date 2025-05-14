@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -16,7 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { generateId, getProject, getVehicles, getDrivers, saveProgressEntry } from "@/lib/storage";
-import { getCurrentPosition } from "@/lib/geolocation";
+import { getCurrentLocation } from "@/lib/geolocation";
 import { GeoLocation, Photo, Vehicle, Driver, MeterReading } from "@/types";
 
 export default function AddProgress() {
@@ -69,9 +68,9 @@ export default function AddProgress() {
       const photoId = generateId();
       
       // Get position
-      let position: GeoLocation = { latitude: 0, longitude: 0 };
+      let position: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
       try {
-        position = await getCurrentPosition();
+        position = await getCurrentLocation();
       } catch (error) {
         console.error("Error getting location:", error);
         toast({
@@ -117,9 +116,9 @@ export default function AddProgress() {
       const readingId = generateId();
       
       // Get position
-      let position: GeoLocation = { latitude: 0, longitude: 0 };
+      let position: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
       try {
-        position = await getCurrentPosition();
+        position = await getCurrentLocation();
       } catch (error) {
         console.error("Error getting location:", error);
         toast({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -17,7 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { generateId, getProjects, getProgressEntries, savePaymentRequest } from "@/lib/storage";
-import { getCurrentPosition } from "@/lib/geolocation";
+import { getCurrentLocation } from "@/lib/geolocation";
 import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -79,9 +78,9 @@ export default function RequestPayment() {
       const photoId = generateId();
       
       // Get position
-      let position: GeoLocation = { latitude: 0, longitude: 0 };
+      let position: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
       try {
-        position = await getCurrentPosition();
+        position = await getCurrentLocation();
       } catch (error) {
         console.error("Error getting location:", error);
         toast({
