@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FileEdit } from "lucide-react";
+import { Plus, FileEdit, BarChart } from "lucide-react";
 import { getProjects, getProgressEntries } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { Project } from "@/types";
@@ -125,14 +125,23 @@ export default function Projects({ showProgressButton = false }: ProjectsProps) 
                     )}
                   </div>
 
-                  <div className="border-t p-4 bg-muted/20">
+                  <div className="border-t p-4 bg-muted/20 flex gap-2">
                     <Button 
                       onClick={() => buttonAction(project.id)}
                       variant="default"
-                      className="w-full"
+                      className="flex-1"
                     >
                       {ButtonIcon && <ButtonIcon className="mr-2 h-4 w-4" />}
                       {buttonLabel}
+                    </Button>
+                    
+                    {/* View Progress Button */}
+                    <Button 
+                      onClick={() => navigate(`/progress/view/${project.id}`)}
+                      variant="outline"
+                      className="flex-none"
+                    >
+                      <BarChart className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>

@@ -1,14 +1,93 @@
 
 import { PaymentRequest, ProgressEntry, Project } from "@/types";
-import { getProgressEntries, getPaymentRequests } from "@/lib/storage";
 
-// Color palette for charts
+// Colors for charts
 export const COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-  "#82CA9D", "#FFC658", "#FF6B6B", "#6A5ACD", "#20B2AA"
+  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", 
+  "#82CA9D", "#FFC658", "#FF7300", "#A4DE6C", "#FF6B6B",
 ];
 
-// Helper function to prepare data for payment purpose piechart
+// Helper function to get recent payment requests (last 7 days)
+export const getRecentPayments = (payments: PaymentRequest[]): PaymentRequest[] => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  return payments.filter((payment) => {
+    const paymentDate = new Date(payment.requestedAt);
+    return paymentDate >= sevenDaysAgo;
+  });
+};
+
+// Helper function to get recent progress entries (last 7 days)
+export const getRecentEntries = (entries: ProgressEntry[]): ProgressEntry[] => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  return entries.filter((entry) => {
+    const entryDate = new Date(entry.date);
+    return entryDate >= sevenDaysAgo;
+  });
+};
+
+// Helper function to prepare data for project activity chart
+export const prepareProjectData = (entries: ProgressEntry[], projects: Project[]) => {
+  // Group by date and project
+  const dataByDate: Record<string, Record<string, number>> = {};
+  
+  // Create a map of project IDs to names
+  const projectMap = new Map(projects.map(p => [p.id, p.name]));
+  
+  // Process entries
+  entries.forEach(entry => {
+    const date = new Date(entry.date).toISOString().split('T')[0]; // YYYY-MM-DD format
+    const projectId = entry.projectId;
+    const projectName = projectMap.get(projectId) || `Project ${projectId.substring(0, 4)}`;
+    
+    if (!dataByDate[date]) {
+      dataByDate[date] = {};
+    }
+    
+    if (!dataByDate[date][projectName]) {
+      dataByDate[date][projectName] = 0;
+    }
+    
+    dataByDate[date][projectName] += entry.distanceCompleted || 0;
+  });
+  
+  // Convert to format needed for the chart
+  return Object.entries(dataByDate)
+    .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+    .map(([date, projects]) => {
+      return {
+        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        ...projects
+      };
+    });
+};
+
+// Helper function to prepare data for leader performance chart
+export const prepareLeaderData = (entries: ProgressEntry[]) => {
+  // Group by leader
+  const dataByLeader: Record<string, number> = {};
+  
+  // Process entries
+  entries.forEach(entry => {
+    const leaderName = entry.userName || 'Unknown';
+    
+    if (!dataByLeader[leaderName]) {
+      dataByLeader[leaderName] = 0;
+    }
+    
+    dataByLeader[leaderName] += entry.distanceCompleted || 0;
+  });
+  
+  // Convert to format needed for the chart
+  return Object.entries(dataByLeader).map(([name, value]) => {
+    return { name, value };
+  });
+};
+
+// Helper function to prepare purpose data with costs
 export const preparePurposeData = (payments: PaymentRequest[]) => {
   const purposeTotals: Record<string, number> = {};
   
@@ -39,107 +118,4 @@ export const preparePurposeData = (payments: PaymentRequest[]) => {
     name: purpose.charAt(0).toUpperCase() + purpose.slice(1),
     value: parseFloat(purposeTotals[purpose].toFixed(2)),
   }));
-};
-
-// Helper function to prepare data for payment status chart
-export const prepareStatusData = (payments: PaymentRequest[]) => {
-  const statusCounts: Record<string, number> = {
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    scheduled: 0,
-    paid: 0,
-  };
-  
-  payments.forEach((payment) => {
-    if (statusCounts[payment.status] !== undefined) {
-      statusCounts[payment.status]++;
-    }
-  });
-  
-  return Object.keys(statusCounts).map((status) => ({
-    name: status.charAt(0).toUpperCase() + status.slice(1),
-    count: statusCounts[status],
-  }));
-};
-
-// Helper function to prepare data for leader performance chart
-export const prepareLeaderData = (entries: ProgressEntry[]) => {
-  const leaderCounts: Record<string, number> = {};
-  
-  entries.forEach((entry) => {
-    if (!leaderCounts[entry.submittedBy]) {
-      leaderCounts[entry.submittedBy] = 0;
-    }
-    leaderCounts[entry.submittedBy]++;
-  });
-  
-  return Object.keys(leaderCounts).map((leader) => ({
-    name: `Leader ${leader.substring(0, 5)}`,
-    entries: leaderCounts[leader]
-  }));
-};
-
-// Helper function to prepare data for project activity chart
-export const prepareProjectData = (entries: ProgressEntry[], projects: Project[]) => {
-  const projectCounts: Record<string, number> = {};
-  const projectNames: Record<string, string> = {};
-  
-  // Create a mapping of project IDs to names
-  projects.forEach((project) => {
-    projectNames[project.id] = project.name;
-  });
-  
-  entries.forEach((entry) => {
-    if (!projectCounts[entry.projectId]) {
-      projectCounts[entry.projectId] = 0;
-    }
-    projectCounts[entry.projectId]++;
-  });
-  
-  return Object.keys(projectCounts).map((projectId) => ({
-    name: projectNames[projectId] || `Project ${projectId.substring(0, 5)}`,
-    count: projectCounts[projectId]
-  }));
-};
-
-// Helper function to calculate project progress
-export const calculateProjectProgress = (
-  project: Project, 
-  progressEntries: ProgressEntry[]
-): number => {
-  if (!project.totalDistance || project.totalDistance <= 0) {
-    return 0;
-  }
-  
-  const projectEntries = progressEntries.filter(entry => entry.projectId === project.id);
-  const totalCompletedDistance = projectEntries.reduce(
-    (sum, entry) => sum + (entry.distanceCompleted || 0), 
-    0
-  );
-  
-  return Math.min(100, (totalCompletedDistance / project.totalDistance) * 100);
-};
-
-// Functions to get recent data
-export const getRecentPayments = (days: number): PaymentRequest[] => {
-  const allPayments = getPaymentRequests();
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - days);
-  
-  return allPayments.filter(payment => {
-    const paymentDate = new Date(payment.requestedAt);
-    return paymentDate >= cutoffDate;
-  });
-};
-
-export const getRecentEntries = (days: number): ProgressEntry[] => {
-  const allEntries = getProgressEntries();
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - days);
-  
-  return allEntries.filter(entry => {
-    const entryDate = new Date(entry.date);
-    return entryDate >= cutoffDate;
-  });
 };

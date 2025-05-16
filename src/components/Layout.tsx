@@ -31,7 +31,8 @@ export function Layout({ children, requiredRoles }: LayoutProps) {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         
-        <main className="flex-1 overflow-y-auto p-4 bg-soft-brown/20 dark:bg-charcoal">
+        <main className="flex-1 overflow-y-auto p-4 bg-soft-brown/20 dark:bg-charcoal md:ml-64">
+          {/* Add left margin on md screens to account for fixed sidebar */}
           <div className="container mx-auto py-4">
             {children}
           </div>

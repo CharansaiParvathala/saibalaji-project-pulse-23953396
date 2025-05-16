@@ -82,7 +82,8 @@ export function Sidebar() {
       <aside 
         className={cn(
           "w-64 border-r bg-background overflow-y-auto fixed top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "md:w-64" // Fixed width on desktop
         )}
       >
         <div className="py-6 px-3 flex flex-col h-full pt-16 md:pt-6">

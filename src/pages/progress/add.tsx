@@ -1,598 +1,310 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { Layout } from "@/components/Layout";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { generateId, getProject, saveProgressEntry, getProgressEntries } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
-import { generateId, getProject, getVehicles, getDrivers, saveProgressEntry } from "@/lib/storage";
-import { getCurrentLocation } from "@/lib/geolocation";
-import { GeoLocation, Photo, Vehicle, Driver, MeterReading, Project } from "@/types";
+
+interface ProgressFormValues {
+  distanceCompleted: number;
+  timeSpent: number;
+  workersPresent: number;
+  notes: string;
+}
 
 export default function AddProgress() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
-  
-  const [project, setProject] = useState<Project | null>(null);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [selectedVehicle, setSelectedVehicle] = useState<string>("");
-  const [driverType, setDriverType] = useState<"internal" | "external">("internal");
-  const [selectedDriver, setSelectedDriver] = useState<string>("");
-  const [externalDriverName, setExternalDriverName] = useState("");
-  const [externalDriverLicense, setExternalDriverLicense] = useState("");
-  const [startMeterReading, setStartMeterReading] = useState<MeterReading | null>(null);
-  const [endMeterReading, setEndMeterReading] = useState<MeterReading | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [useVehicle, setUseVehicle] = useState(false);
-  const [distanceCompleted, setDistanceCompleted] = useState("");
-  const [timeSpent, setTimeSpent] = useState("");
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [today] = useState(new Date().toISOString().split('T')[0]); // Today's date in YYYY-MM-DD format
+  const [existingEntries, setExistingEntries] = useState<any[]>([]);
+
+  const form = useForm<ProgressFormValues>({
+    defaultValues: {
+      distanceCompleted: 0,
+      timeSpent: 0,
+      workersPresent: 0,
+      notes: "",
+    },
+  });
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !user) return;
 
+    // Load project data
     const projectData = getProject(projectId);
     if (projectData) {
       setProject(projectData);
-    } else {
-      toast({
-        title: "Error",
-        description: "Project not found",
-        variant: "destructive",
-      });
-      navigate("/projects");
+      
+      // Check if user has already submitted progress for this project today
+      const allEntries = getProgressEntries();
+      const todayDateStr = new Date().toISOString().split('T')[0];
+      
+      const todayEntries = allEntries.filter(
+        entry => entry.projectId === projectId && 
+                 entry.createdBy === user.id && 
+                 entry.date.startsWith(todayDateStr)
+      );
+      
+      setExistingEntries(todayEntries);
     }
+    
+    setLoading(false);
+  }, [projectId, user]);
 
-    // Load vehicles and drivers
-    setVehicles(getVehicles());
-    setDrivers(getDrivers());
-  }, [projectId, navigate, toast]);
-
-  const capturePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0) return;
+  const onSubmit = async (data: ProgressFormValues) => {
+    if (!projectId || !user) return;
     
     try {
-      setLoading(true);
-      const file = event.target.files[0];
-      const photoId = generateId();
-      
-      // Get position
-      let position: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
-      try {
-        position = await getCurrentLocation();
-      } catch (error) {
-        console.error("Error getting location:", error);
-        toast({
-          title: "Location Error",
-          description: "Couldn't get your location. Using default values.",
-          variant: "destructive",
-        });
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newPhoto: Photo = {
-          id: photoId,
-          url: reader.result as string,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            location: position,
-          },
-        };
-        
-        setPhotos((prev) => [...prev, newPhoto]);
-        setLoading(false);
-      };
-      
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error capturing photo:", error);
-      setLoading(false);
-      toast({
-        title: "Error",
-        description: "Failed to capture photo",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const captureMeterReading = async (type: "start" | "end", event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0 || !selectedVehicle) return;
-    
-    try {
-      setLoading(true);
-      const file = event.target.files[0];
-      const readingId = generateId();
-      
-      // Get position
-      let position: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
-      try {
-        position = await getCurrentLocation();
-      } catch (error) {
-        console.error("Error getting location:", error);
-        toast({
-          title: "Location Error",
-          description: "Couldn't get your location. Using default values.",
-          variant: "destructive",
-        });
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const photoData: Photo = {
-          id: generateId(),
-          url: reader.result as string,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            location: position,
-          },
-        };
-        
-        const reading: MeterReading = {
-          id: readingId,
-          vehicleId: selectedVehicle,
-          reading: 0, // This should be input by the user in a real app
-          type: type,
-          photo: photoData,
-        };
-        
-        if (type === "start") {
-          setStartMeterReading(reading);
-        } else {
-          setEndMeterReading(reading);
-        }
-        setLoading(false);
-      };
-      
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error capturing meter reading:", error);
-      setLoading(false);
-      toast({
-        title: "Error",
-        description: "Failed to capture meter reading",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (photos.length === 0) {
-      toast({
-        title: "Error",
-        description: "You must add at least one photo",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (useVehicle) {
-      if (!selectedVehicle) {
+      // Check if this project has totalDistance defined
+      if (project.totalDistance === undefined) {
         toast({
           title: "Error",
-          description: "You must select a vehicle",
+          description: "This project does not have a total distance defined.",
           variant: "destructive",
         });
         return;
       }
       
-      if (!startMeterReading || !endMeterReading) {
-        toast({
-          title: "Error",
-          description: "You must provide both start and end meter readings",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // Validate distance and time
-    if (!distanceCompleted || isNaN(parseFloat(distanceCompleted)) || parseFloat(distanceCompleted) < 0) {
-      toast({
-        title: "Error",
-        description: "You must enter a valid distance completed",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!timeSpent || isNaN(parseFloat(timeSpent)) || parseFloat(timeSpent) <= 0) {
-      toast({
-        title: "Error",
-        description: "You must enter valid time spent",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      
-      let vehicleData = undefined;
-      if (useVehicle) {
-        vehicleData = {
-          vehicleId: selectedVehicle,
-          driverId: driverType === "internal" ? selectedDriver : undefined,
-          externalDriver: driverType === "external" ? {
-            name: externalDriverName,
-            licenseNumber: externalDriverLicense,
-          } : undefined,
-          meterReadings: {
-            start: startMeterReading!,
-            end: endMeterReading!,
-          },
-        };
-      }
-      
-      const progressEntry = {
+      // Create the progress entry
+      const newEntry = {
         id: generateId(),
-        projectId: projectId!,
-        date: date,
-        photos: photos,
-        vehicleUsed: vehicleData,
-        distanceCompleted: parseFloat(distanceCompleted),
-        timeSpent: parseFloat(timeSpent),
-        paymentRequests: [],
-        submittedBy: user.id,
-        submittedAt: new Date().toISOString(),
-        status: "draft" as const,
-        isLocked: false,
+        projectId,
+        distanceCompleted: parseFloat(data.distanceCompleted.toString()),
+        timeSpent: parseFloat(data.timeSpent.toString()),
+        workersPresent: parseInt(data.workersPresent.toString()),
+        notes: data.notes,
+        createdBy: user.id,
+        userName: user.name,
+        date: new Date().toISOString(),
       };
       
-      saveProgressEntry(progressEntry);
+      // Calculate the total progress including today's entry
+      const totalCompletedSoFar = existingEntries.reduce(
+        (sum, entry) => sum + (entry.distanceCompleted || 0), 
+        0
+      );
+      
+      const newTotalCompleted = totalCompletedSoFar + newEntry.distanceCompleted;
+      
+      // Check if the new total exceeds the project's total distance
+      if (newTotalCompleted > project.totalDistance) {
+        toast({
+          title: "Warning",
+          description: `Total completed distance (${newTotalCompleted}m) exceeds project total distance (${project.totalDistance}m). Please enter a smaller value.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Save to storage
+      saveProgressEntry(newEntry);
       
       toast({
         title: "Success",
-        description: "Progress entry saved",
+        description: "Progress has been recorded successfully.",
       });
       
-      navigate(`/projects/${projectId}`);
+      // Navigate back to projects
+      navigate("/progress");
+      
     } catch (error) {
       console.error("Error saving progress:", error);
       toast({
         title: "Error",
-        description: "Failed to save progress entry",
+        description: "There was a problem saving your progress. Please try again.",
         variant: "destructive",
       });
-      setLoading(false);
     }
   };
 
-  if (!project) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex justify-center py-8">
-          <p>Loading project details...</p>
+          <p>Loading project data...</p>
         </div>
       </Layout>
     );
   }
 
-  // Calculate project progress percentage if available
-  const calculateProgressPercentage = () => {
-    if (!project.totalDistance || !project.totalDistance) {
-      return "N/A";
-    }
-    
-    const currentDistance = parseFloat(distanceCompleted) || 0;
-    const progressPercentage = (currentDistance / project.totalDistance) * 100;
-    return progressPercentage.toFixed(2) + "%";
-  };
+  if (!project) {
+    return (
+      <Layout>
+        <div className="py-8">
+          <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
+          <p>The project you're looking for doesn't exist.</p>
+          <Button 
+            className="mt-4" 
+            onClick={() => navigate("/projects")}
+          >
+            Back to Projects
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Add Progress</h1>
-        <p className="text-muted-foreground">
-          Project: {project.name}
-        </p>
+      <div className="max-w-2xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Add Progress for: {project.name}</h1>
+          <Button 
+            variant="outline"
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </Button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <Card>
+        {existingEntries.length > 0 && (
+          <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Today's Progress</CardTitle>
+              <CardDescription>
+                You have already recorded progress entries today for this project
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Work Progress</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="distanceCompleted">Distance Completed (meters)</Label>
-                  <Input
-                    id="distanceCompleted"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max={project.totalDistance || undefined}
-                    value={distanceCompleted}
-                    onChange={(e) => setDistanceCompleted(e.target.value)}
-                    required
-                  />
-                  {project.totalDistance && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Total project distance: {project.totalDistance} meters
+            <CardContent>
+              <div className="space-y-2">
+                {existingEntries.map((entry) => (
+                  <div key={entry.id} className="border-b pb-2 last:border-0">
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(entry.date).toLocaleTimeString()}
                     </p>
+                    <p>Distance completed: {entry.distanceCompleted} meters</p>
+                    <p>Time spent: {entry.timeSpent} hours</p>
+                  </div>
+                ))}
+                <div className="mt-4 pt-2 border-t">
+                  <p className="font-medium">
+                    Total today: {existingEntries.reduce((sum, entry) => sum + entry.distanceCompleted, 0)} meters
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Record Today's Progress</CardTitle>
+            <CardDescription>
+              Enter the work completed today ({today})
+            </CardDescription>
+          </CardHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="distanceCompleted"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Distance Completed (meters)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.1" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the distance covered in meters today
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
-                <div>
-                  <Label htmlFor="timeSpent">Time Spent (hours)</Label>
-                  <Input
-                    id="timeSpent"
-                    type="number"
-                    step="0.1"
-                    min="0.1"
-                    value={timeSpent}
-                    onChange={(e) => setTimeSpent(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              
-              {project.totalDistance && distanceCompleted && (
-                <div className="mt-4">
-                  <Label>This Entry's Progress</Label>
-                  <div className="mt-2 flex items-center">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mr-2">
-                      <div 
-                        className="bg-blue-600 h-2.5 rounded-full" 
-                        style={{ width: `${Math.min(100, (parseFloat(distanceCompleted) / project.totalDistance) * 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-sm">{calculateProgressPercentage()}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Photos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="photos">Add Photos</Label>
-                <Input
-                  id="photos"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={capturePhoto}
-                  disabled={loading}
                 />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Take photos of the work progress
-                </p>
-              </div>
 
-              {photos.length > 0 && (
-                <div className="mt-4">
-                  <Label>Photo Preview</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                    {photos.map((photo) => (
-                      <div key={photo.id} className="relative">
-                        <img
-                          src={photo.url}
-                          alt="Progress"
-                          className="w-full h-40 object-cover rounded-md"
+                <FormField
+                  control={form.control}
+                  name="timeSpent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time Spent (hours)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.5" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-xs">
-                          {new Date(photo.metadata.timestamp).toLocaleString()}
-                          <br />
-                          Lat: {photo.metadata.location.latitude.toFixed(6)}, 
-                          Lon: {photo.metadata.location.longitude.toFixed(6)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Vehicle Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="useVehicle"
-                  checked={useVehicle}
-                  onChange={(e) => setUseVehicle(e.target.checked)}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="useVehicle">This work used a vehicle</Label>
-              </div>
-
-              {useVehicle && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="vehicle">Select Vehicle</Label>
-                    <Select
-                      value={selectedVehicle}
-                      onValueChange={setSelectedVehicle}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a vehicle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicles.map((vehicle) => (
-                          <SelectItem key={vehicle.id} value={vehicle.id}>
-                            {vehicle.model} - {vehicle.registrationNumber}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Driver Type</Label>
-                    <div className="flex space-x-4 mt-1">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="internalDriver"
-                          value="internal"
-                          checked={driverType === "internal"}
-                          onChange={() => setDriverType("internal")}
-                        />
-                        <Label htmlFor="internalDriver">Internal Driver</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="externalDriver"
-                          value="external"
-                          checked={driverType === "external"}
-                          onChange={() => setDriverType("external")}
-                        />
-                        <Label htmlFor="externalDriver">External Driver</Label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {driverType === "internal" ? (
-                    <div>
-                      <Label htmlFor="driver">Select Driver</Label>
-                      <Select
-                        value={selectedDriver}
-                        onValueChange={setSelectedDriver}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a driver" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {drivers.map((driver) => (
-                            <SelectItem key={driver.id} value={driver.id}>
-                              {driver.name} - {driver.licenseNumber}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="externalDriverName">External Driver Name</Label>
-                        <Input
-                          id="externalDriverName"
-                          value={externalDriverName}
-                          onChange={(e) => setExternalDriverName(e.target.value)}
-                          required={driverType === "external"}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="externalDriverLicense">Driver License Number</Label>
-                        <Input
-                          id="externalDriverLicense"
-                          value={externalDriverLicense}
-                          onChange={(e) => setExternalDriverLicense(e.target.value)}
-                          required={driverType === "external"}
-                        />
-                      </div>
-                    </div>
+                      </FormControl>
+                      <FormDescription>
+                        Enter the number of hours worked
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
 
-                  <div>
-                    <Label htmlFor="startMeter">Start Meter Reading</Label>
-                    <Input
-                      id="startMeter"
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={(e) => captureMeterReading("start", e)}
-                      disabled={loading || !selectedVehicle}
-                    />
-                    {startMeterReading && (
-                      <div className="mt-2">
-                        <img
-                          src={startMeterReading.photo.url}
-                          alt="Start Meter"
-                          className="w-40 h-40 object-cover rounded-md"
+                <FormField
+                  control={form.control}
+                  name="workersPresent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Workers Present</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />
-                      </div>
-                    )}
-                  </div>
+                      </FormControl>
+                      <FormDescription>
+                        Enter the number of workers present today
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <div>
-                    <Label htmlFor="endMeter">End Meter Reading</Label>
-                    <Input
-                      id="endMeter"
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={(e) => captureMeterReading("end", e)}
-                      disabled={loading || !selectedVehicle || !startMeterReading}
-                    />
-                    {endMeterReading && (
-                      <div className="mt-2">
-                        <img
-                          src={endMeterReading.photo.url}
-                          alt="End Meter"
-                          className="w-40 h-40 object-cover rounded-md"
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Any additional information about today's work"
+                          className="min-h-[100px]" 
+                          {...field} 
                         />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={() => navigate(`/projects/${projectId}`)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save Progress"}
-            </Button>
-          </div>
-        </form>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Submit Progress</Button>
+              </CardFooter>
+            </form>
+          </Form>
+        </Card>
       </div>
     </Layout>
   );

@@ -4,16 +4,15 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Clock, CheckCircle, AlertCircle } from "lucide-react";
-import { getProjects } from "@/lib/storage";
+import { getProjects, getPaymentRequests, getPaymentRequestsByStatus } from "@/lib/storage";
+import { Layout } from "@/components/Layout";
 
 function LeaderDashboard() {
-  // Mock data for demonstration
-  const activeProjects = 3;
-  const pendingPayments = 2;
-  const lastUpload = "2 hours ago";
   const [projects, setProjects] = useState([]);
+  const [pendingPayments, setPendingPayments] = useState(0);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const [lastProgressDate, setLastProgressDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -22,6 +21,16 @@ function LeaderDashboard() {
     const allProjects = getProjects();
     const userProjects = allProjects.filter(project => project.createdBy === user.id);
     setProjects(userProjects);
+    
+    // Load pending payments
+    const userPayments = getPaymentRequests().filter(payment => payment.requestedBy === user.id);
+    const pending = userPayments.filter(payment => payment.status === "pending");
+    setPendingPayments(pending.length);
+    
+    // Get last progress update
+    // For demo we'll just use a mock date
+    setLastProgressDate("2 hours ago");
+    
     setLoading(false);
   }, [user]);
 
@@ -48,7 +57,7 @@ function LeaderDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{pendingPayments}</p>
-            <Link to="/payments">
+            <Link to="/payments/history">
               <Button variant="link" className="px-0">View payment requests</Button>
             </Link>
           </CardContent>
@@ -60,7 +69,7 @@ function LeaderDashboard() {
             <CardDescription>Latest activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-lg">{lastUpload}</p>
+            <p className="text-lg">{lastProgressDate || "No updates yet"}</p>
             <Link to="/progress">
               <Button variant="link" className="px-0">Add new progress</Button>
             </Link>
@@ -223,9 +232,34 @@ function CheckerDashboard() {
 
 function OwnerDashboard() {
   // Mock data for demonstration
-  const pendingPayments = 7;
-  const totalProjects = 12;
-  const totalExpenses = "₹29,450";
+  const [pendingPayments, setPendingPayments] = useState(0);
+  const [totalProjects, setTotalProjects] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [paymentRequests, setPaymentRequests] = useState([]);
+  
+  useEffect(() => {
+    // Load real data
+    const allProjects = getProjects();
+    setTotalProjects(allProjects.filter(p => p.status === "active").length);
+    
+    const pending = getPaymentRequestsByStatus("approved");
+    setPendingPayments(pending.length);
+    setPaymentRequests(pending.slice(0, 3));
+    
+    // Calculate total expenses for this month
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const allPayments = getPaymentRequests();
+    
+    const thisMonthPayments = allPayments.filter(payment => {
+      const paymentDate = new Date(payment.requestedAt);
+      return paymentDate.getMonth() === currentMonth && 
+             paymentDate.getFullYear() === currentYear;
+    });
+    
+    const totalAmount = thisMonthPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    setTotalExpenses(totalAmount);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -262,7 +296,7 @@ function OwnerDashboard() {
             <CardDescription>This month</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{totalExpenses}</p>
+            <p className="text-3xl font-bold">₹{totalExpenses.toLocaleString()}</p>
             <Link to="/statistics">
               <Button variant="link" className="px-0">View breakdown</Button>
             </Link>
@@ -277,23 +311,73 @@ function OwnerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+              {paymentRequests.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No pending payment requests</p>
+              ) : paymentRequests.map((request, i) => (
+                <div key={request.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded bg-pale-cyan flex items-center justify-center text-primary-foreground font-medium">
-                      P{i}
+                      P{i+1}
                     </div>
                     <div className="ml-4">
-                      <p className="font-medium">Payment Request #{200 + i}</p>
+                      <p className="font-medium">Payment Request #{request.id.substr(-4)}</p>
                       <p className="text-sm text-muted-foreground">
-                        ₹{i * 2000} • Approved by Checker {i} • {i} day{i !== 1 ? 's' : ''} ago
+                        ₹{request.amount.toLocaleString()} • {new Date(request.requestedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex space-x-2">
-                    <Button variant="outline">Schedule</Button>
-                    <Button>Pay Now</Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        // Handle schedule payment
+                        const date = new Date();
+                        date.setDate(date.getDate() + 3); // Schedule for 3 days from now
+                        
+                        const updatedRequest = {
+                          ...request,
+                          scheduledDate: date.toISOString(),
+                          status: "scheduled"
+                        };
+                        
+                        // Update in storage (would be implemented)
+                        // updatePaymentRequest(updatedRequest);
+                        
+                        // Update UI
+                        setPaymentRequests(prev => 
+                          prev.filter(item => item.id !== request.id)
+                        );
+                        
+                        // Show toast notification
+                        alert(`Payment scheduled for ${date.toLocaleDateString()}`);
+                      }}
+                    >
+                      Schedule
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        // Handle immediate payment
+                        const updatedRequest = {
+                          ...request,
+                          status: "paid",
+                          paidAt: new Date().toISOString()
+                        };
+                        
+                        // Update in storage (would be implemented)
+                        // updatePaymentRequest(updatedRequest);
+                        
+                        // Update UI
+                        setPaymentRequests(prev => 
+                          prev.filter(item => item.id !== request.id)
+                        );
+                        
+                        // Show toast notification
+                        alert("Payment completed successfully");
+                      }}
+                    >
+                      Pay Now
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -439,15 +523,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
-        <p className="text-muted-foreground">
-          You are logged in as a {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-        </p>
+    <Layout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
+          <p className="text-muted-foreground">
+            You are logged in as a {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+          </p>
+        </div>
+        
+        {dashboards[user.role]}
       </div>
-      
-      {dashboards[user.role]}
-    </div>
+    </Layout>
   );
 }

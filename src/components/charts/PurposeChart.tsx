@@ -35,10 +35,13 @@ const preparePurposeData = (payments: PaymentRequest[]) => {
     }
   });
   
-  return Object.keys(purposeTotals).map((purpose) => ({
-    name: purpose.charAt(0).toUpperCase() + purpose.slice(1),
-    value: parseFloat(purposeTotals[purpose].toFixed(2)),
-  }));
+  // Filter out entries with zero value before returning
+  return Object.keys(purposeTotals)
+    .filter(purpose => purposeTotals[purpose] > 0)
+    .map((purpose) => ({
+      name: purpose.charAt(0).toUpperCase() + purpose.slice(1),
+      value: parseFloat(purposeTotals[purpose].toFixed(2)),
+    }));
 };
 
 export function PurposeChart({ payments, title }: PurposeChartProps) {
