@@ -68,9 +68,13 @@ export default function Login() {
       <Card className="w-full max-w-md shadow-soft-lg">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-3xl">
-              SB
-            </div>
+            <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+  <img
+    src="/logo.png" // replace with your logo path
+    alt="Logo"
+    className="h-12 w-12 object-contain"
+  />
+          </div>
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             Sai Balaji
