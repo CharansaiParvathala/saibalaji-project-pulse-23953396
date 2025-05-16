@@ -63,7 +63,7 @@ export default function Projects({ showProgressButton = false }: ProjectsProps) 
   const buttonAction = showProgressButton
     ? (projectId: string) => navigate(`/progress/add/${projectId}`)
     : (projectId: string) => navigate(`/projects/${projectId}`);
-  const buttonIcon = showProgressButton ? FileEdit : undefined;
+  const ButtonIcon = showProgressButton ? FileEdit : undefined;
 
   return (
     <Layout>
@@ -131,7 +131,7 @@ export default function Projects({ showProgressButton = false }: ProjectsProps) 
                       variant="default"
                       className="w-full"
                     >
-                      {buttonIcon && <buttonIcon className="mr-2 h-4 w-4" />}
+                      {ButtonIcon && <ButtonIcon className="mr-2 h-4 w-4" />}
                       {buttonLabel}
                     </Button>
                   </div>
