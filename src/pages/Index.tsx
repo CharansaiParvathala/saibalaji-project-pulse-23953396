@@ -5,6 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 const Index = () => {
   const { isAuthenticated } = useAuth();
   
+  // Add a console log to help debug
+  console.log("Index component rendered, isAuthenticated:", isAuthenticated);
+  
   if (isAuthenticated) {
     return <Navigate to="/dashboard" />;
   }
