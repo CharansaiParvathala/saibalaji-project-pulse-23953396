@@ -79,8 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("sai-balaji-user");
-    // Note: Navigation is now handled in the Sidebar component 
-    // for better separation of concerns
   };
 
   return (

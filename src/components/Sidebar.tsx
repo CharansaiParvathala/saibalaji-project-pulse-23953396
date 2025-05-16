@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { 
   Home, 
   PlusCircle, 
@@ -15,8 +15,7 @@ import {
   History,
   CalendarCheck,
   Menu,
-  X,
-  Key
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,17 +23,11 @@ import { useAuth } from "@/hooks/useAuth";
 export function Sidebar() {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
   
   if (!user) return null;
   
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
-  };
-  
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
   
   const roleLinks = {
@@ -58,7 +51,6 @@ export function Sidebar() {
     admin: [
       { to: "/dashboard", icon: Home, label: "Dashboard" },
       { to: "/users", icon: Users, label: "Manage Users" },
-      { to: "/users/credentials", icon: Key, label: "Credentials" },
       { to: "/vehicles", icon: Truck, label: "Vehicles" },
       { to: "/statistics", icon: BarChart, label: "Statistics" },
     ],
@@ -124,7 +116,7 @@ export function Sidebar() {
           
           <div className="pt-2 mt-auto">
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="flex items-center px-4 py-3 text-sm font-medium w-full rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             >
               <LogOut className="mr-3 h-5 w-5" />

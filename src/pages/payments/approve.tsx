@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Check, Calendar, History } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 
 export default function ApprovePayments() {
   const { toast } = useToast();
@@ -31,7 +31,6 @@ export default function ApprovePayments() {
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
   const [scheduledDate, setScheduledDate] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
-  const [dateError, setDateError] = useState("");
 
   useEffect(() => {
     // Load payment requests based on their status
@@ -72,32 +71,12 @@ export default function ApprovePayments() {
 
   const openScheduleDialog = (request: PaymentRequest) => {
     setSelectedRequest(request);
-    // Set default date to tomorrow to ensure future date
-    const tomorrow = addDays(new Date(), 1);
-    setScheduledDate(tomorrow.toISOString().split('T')[0]);
-    setDateError("");
+    setScheduledDate(new Date().toISOString().split('T')[0]);
     setShowScheduleDialog(true);
-  };
-
-  const validateDate = (dateString: string): boolean => {
-    const selectedDate = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset hours to compare dates only
-    
-    if (selectedDate <= today) {
-      setDateError("Please select a future date");
-      return false;
-    }
-    
-    setDateError("");
-    return true;
   };
 
   const handleSchedulePayment = () => {
     if (!user || !selectedRequest) return;
-    
-    // Validate that selected date is in the future
-    if (!validateDate(scheduledDate)) return;
     
     const updatedRequest = {
       ...selectedRequest,
@@ -306,14 +285,8 @@ export default function ApprovePayments() {
                 id="paymentDate"
                 type="date"
                 value={scheduledDate}
-                onChange={(e) => {
-                  setScheduledDate(e.target.value);
-                  validateDate(e.target.value);
-                }}
-                min={addDays(new Date(), 1).toISOString().split('T')[0]} 
-                className={dateError ? "border-red-500" : ""}
+                onChange={(e) => setScheduledDate(e.target.value)}
               />
-              {dateError && <p className="text-sm text-red-500 mt-1">{dateError}</p>}
             </div>
           </div>
           
@@ -321,7 +294,7 @@ export default function ApprovePayments() {
             <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSchedulePayment} disabled={!!dateError}>
+            <Button onClick={handleSchedulePayment}>
               Schedule Payment
             </Button>
           </DialogFooter>

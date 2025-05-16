@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
@@ -25,8 +24,6 @@ import AddVehicle from "@/pages/vehicles/add";
 import EditVehicle from "@/pages/vehicles/edit/[id]";
 import Submissions from "@/pages/submissions";
 import ReviewSubmission from "@/pages/submissions/[id]";
-import ReviewHistory from "@/pages/history";
-import Credentials from "@/pages/users/credentials";
 
 function App() {
   return (
@@ -60,10 +57,6 @@ function App() {
         <Route path="/users" element={<UsersList />} />
         <Route path="/users/add" element={<AddUser />} />
         <Route path="/users/edit/:id" element={<EditUser />} />
-        <Route path="/users/credentials" element={<Credentials />} />
-        
-        {/* Checker history */}
-        <Route path="/history" element={<ReviewHistory />} />
         
         {/* Vehicles */}
         <Route path="/vehicles" element={<VehiclesList />} />
