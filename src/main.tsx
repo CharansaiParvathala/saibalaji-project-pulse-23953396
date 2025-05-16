@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
+import { AuthProvider } from './hooks/useAuth';
 
 // Create a function to render the app to handle any potential errors
 const renderApp = () => {
@@ -12,7 +13,9 @@ const renderApp = () => {
     root.render(
       <React.StrictMode>
         <BrowserRouter>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </BrowserRouter>
       </React.StrictMode>
     );
