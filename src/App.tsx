@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
