@@ -88,7 +88,7 @@ export interface ProgressEntry {
   id: string;
   projectId: string;
   date: string;
-  photos: Photo[];
+  photos?: Photo[];
   vehicleUsed?: {
     vehicleId: string;
     driverId?: string;
@@ -96,23 +96,27 @@ export interface ProgressEntry {
       name: string;
       licenseNumber: string;
     };
-    meterReadings: {
+    meterReadings?: {
       start: MeterReading;
       end: MeterReading;
     };
   };
   distanceCompleted?: number; // Distance completed in meters
   timeSpent?: number; // Time spent in hours
-  paymentRequests: string[];
-  submittedBy: string;
-  submittedAt: string;
-  status: "draft" | "submitted" | "approved" | "correction-requested" | "locked";
-  isLocked: boolean;
+  workersPresent?: number; // Number of workers present
+  notes?: string; // Additional notes
+  paymentRequests?: string[];
+  submittedBy?: string;
+  submittedAt?: string;
+  status?: "draft" | "submitted" | "approved" | "correction-requested" | "locked";
+  isLocked?: boolean;
   correctionRequest?: {
     message: string;
     requestedAt: string;
     requestedBy: string;
   };
+  createdBy?: string; // ID of the user who created this entry
+  userName?: string; // Name of the user who created this entry
 }
 
 export interface PaymentRequest {
@@ -133,3 +137,4 @@ export interface PaymentRequest {
   scheduledDate?: string;
   paidDate?: string;
 }
+

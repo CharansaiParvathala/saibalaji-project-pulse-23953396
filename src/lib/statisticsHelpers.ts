@@ -114,8 +114,28 @@ export const preparePurposeData = (payments: PaymentRequest[]) => {
     }
   });
   
-  return Object.keys(purposeTotals).map((purpose) => ({
-    name: purpose.charAt(0).toUpperCase() + purpose.slice(1),
-    value: parseFloat(purposeTotals[purpose].toFixed(2)),
+  return Object.keys(purposeTotals)
+    .filter(purpose => purposeTotals[purpose] > 0) // Filter out zero values
+    .map((purpose) => ({
+      name: purpose.charAt(0).toUpperCase() + purpose.slice(1),
+      value: parseFloat(purposeTotals[purpose].toFixed(2)),
+    }));
+};
+
+// Helper function to prepare status data for payment chart
+export const prepareStatusData = (payments: PaymentRequest[]) => {
+  const statusCount: Record<string, number> = {};
+  
+  payments.forEach((payment) => {
+    const status = payment.status;
+    if (!statusCount[status]) {
+      statusCount[status] = 0;
+    }
+    statusCount[status]++;
+  });
+  
+  return Object.keys(statusCount).map((status) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
+    count: statusCount[status],
   }));
 };

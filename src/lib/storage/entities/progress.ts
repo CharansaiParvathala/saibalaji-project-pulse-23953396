@@ -14,10 +14,21 @@ export function getProgressEntry(id: string): ProgressEntry | undefined {
 }
 
 export function saveProgressEntry(entry: ProgressEntry): ProgressEntry {
+  // Ensure all required fields are present
+  const completeEntry: ProgressEntry = {
+    ...entry,
+    photos: entry.photos || [],
+    paymentRequests: entry.paymentRequests || [],
+    status: entry.status || "draft",
+    submittedBy: entry.submittedBy || entry.createdBy || "",
+    submittedAt: entry.submittedAt || new Date().toISOString(),
+    isLocked: entry.isLocked || false
+  };
+  
   const entries = getProgressEntries();
-  entries.push(entry);
+  entries.push(completeEntry);
   saveToStorage(STORAGE_KEYS.PROGRESS_ENTRIES, entries);
-  return entry;
+  return completeEntry;
 }
 
 export function updateProgressEntry(updatedEntry: ProgressEntry): ProgressEntry {

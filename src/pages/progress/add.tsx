@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { generateId, getProject, saveProgressEntry, getProgressEntries } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
+import { ProgressEntry } from "@/types";
 
 interface ProgressFormValues {
   distanceCompleted: number;
@@ -26,7 +27,7 @@ export default function AddProgress() {
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [today] = useState(new Date().toISOString().split('T')[0]); // Today's date in YYYY-MM-DD format
-  const [existingEntries, setExistingEntries] = useState<any[]>([]);
+  const [existingEntries, setExistingEntries] = useState<ProgressEntry[]>([]);
 
   const form = useForm<ProgressFormValues>({
     defaultValues: {
@@ -76,7 +77,7 @@ export default function AddProgress() {
       }
       
       // Create the progress entry
-      const newEntry = {
+      const newEntry: ProgressEntry = {
         id: generateId(),
         projectId,
         distanceCompleted: parseFloat(data.distanceCompleted.toString()),
@@ -86,6 +87,12 @@ export default function AddProgress() {
         createdBy: user.id,
         userName: user.name,
         date: new Date().toISOString(),
+        photos: [],
+        paymentRequests: [],
+        status: "draft",
+        submittedBy: user.id,
+        submittedAt: new Date().toISOString(),
+        isLocked: false
       };
       
       // Calculate the total progress including today's entry
