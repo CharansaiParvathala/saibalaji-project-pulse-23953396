@@ -14,8 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getUsers, updateUser } from "@/lib/storage";
-import { User, UserRole } from "@/types";
+import { User } from "@/types";
 import { toast } from "sonner";
+
+type Role = "leader" | "checker" | "owner" | "admin";
 
 export default function EditUser() {
   const { id } = useParams<{ id: string }>();
@@ -27,7 +29,7 @@ export default function EditUser() {
   // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>("leader");
+  const [role, setRole] = useState<Role>("leader");
   
   useEffect(() => {
     if (!id) return;
@@ -133,7 +135,7 @@ export default function EditUser() {
                 <Label htmlFor="role">Role</Label>
                 <Select
                   value={role}
-                  onValueChange={(value: UserRole) => setRole(value)}
+                  onValueChange={(value: Role) => setRole(value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />

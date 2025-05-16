@@ -1,8 +1,10 @@
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: "leader" | "checker" | "owner" | "admin";
+  createdAt?: string;
 }
 
 export interface GeoLocation {
@@ -25,6 +27,15 @@ export interface Vehicle {
   model: string;
   registrationNumber: string;
   type: "truck" | "car" | "bike";
+  pollutionCertificate?: {
+    number: string;
+    expiryDate: string;
+  };
+  fitnessCertificate?: {
+    number: string;
+    expiryDate: string;
+  };
+  additionalDetails?: Record<string, string>;
 }
 
 export interface Driver {
@@ -43,6 +54,7 @@ export interface MeterReading {
 }
 
 export type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
+export type UserRole = "leader" | "checker" | "owner" | "admin";
 
 export interface PaymentStatusHistoryEntry {
   status: PaymentRequest["status"];

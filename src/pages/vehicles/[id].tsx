@@ -51,11 +51,15 @@ export default function VehicleDetails() {
     );
   }
 
-  const isPollutionExpired = new Date(vehicle.pollutionCertificate.expiryDate) < new Date();
-  const isFitnessExpired = new Date(vehicle.fitnessCertificate.expiryDate) < new Date();
+  const isPollutionExpired = vehicle.pollutionCertificate ? 
+    new Date(vehicle.pollutionCertificate.expiryDate) < new Date() : false;
+  const isFitnessExpired = vehicle.fitnessCertificate ? 
+    new Date(vehicle.fitnessCertificate.expiryDate) < new Date() : false;
   
-  const pollutionExpiryDate = new Date(vehicle.pollutionCertificate.expiryDate);
-  const fitnessExpiryDate = new Date(vehicle.fitnessCertificate.expiryDate);
+  const pollutionExpiryDate = vehicle.pollutionCertificate ? 
+    new Date(vehicle.pollutionCertificate.expiryDate) : new Date();
+  const fitnessExpiryDate = vehicle.fitnessCertificate ? 
+    new Date(vehicle.fitnessCertificate.expiryDate) : new Date();
   
   const daysUntilPollutionExpiry = Math.ceil((pollutionExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const daysUntilFitnessExpiry = Math.ceil((fitnessExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -99,6 +103,10 @@ export default function VehicleDetails() {
                   <p className="text-sm text-muted-foreground">Registration Number</p>
                   <p className="text-xl font-medium">{vehicle.registrationNumber}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Type</p>
+                  <p className="text-xl font-medium">{vehicle.type}</p>
+                </div>
                 {vehicle.additionalDetails && Object.entries(vehicle.additionalDetails).map(([key, value]) => (
                   <div key={key}>
                     <p className="text-sm text-muted-foreground">{key}</p>
@@ -118,41 +126,45 @@ export default function VehicleDetails() {
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm text-muted-foreground">Pollution Certificate</p>
-                    <div className={`px-2 py-1 rounded text-xs ${isPollutionExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                      {isPollutionExpired ? 'Expired' : daysUntilPollutionExpiry <= 30 ? 'Expiring Soon' : 'Active'}
+                {vehicle.pollutionCertificate && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm text-muted-foreground">Pollution Certificate</p>
+                      <div className={`px-2 py-1 rounded text-xs ${isPollutionExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                        {isPollutionExpired ? 'Expired' : daysUntilPollutionExpiry <= 30 ? 'Expiring Soon' : 'Active'}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p><strong>Certificate Number:</strong> {vehicle.pollutionCertificate.number}</p>
+                      <p><strong>Expiry Date:</strong> {new Date(vehicle.pollutionCertificate.expiryDate).toLocaleDateString()}</p>
+                      {!isPollutionExpired && (
+                        <p className="text-sm text-muted-foreground">
+                          {daysUntilPollutionExpiry} days remaining
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <p><strong>Certificate Number:</strong> {vehicle.pollutionCertificate.number}</p>
-                    <p><strong>Expiry Date:</strong> {new Date(vehicle.pollutionCertificate.expiryDate).toLocaleDateString()}</p>
-                    {!isPollutionExpired && (
-                      <p className="text-sm text-muted-foreground">
-                        {daysUntilPollutionExpiry} days remaining
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm text-muted-foreground">Fitness Certificate</p>
-                    <div className={`px-2 py-1 rounded text-xs ${isFitnessExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                      {isFitnessExpired ? 'Expired' : daysUntilFitnessExpiry <= 30 ? 'Expiring Soon' : 'Active'}
+                {vehicle.fitnessCertificate && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm text-muted-foreground">Fitness Certificate</p>
+                      <div className={`px-2 py-1 rounded text-xs ${isFitnessExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                        {isFitnessExpired ? 'Expired' : daysUntilFitnessExpiry <= 30 ? 'Expiring Soon' : 'Active'}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p><strong>Certificate Number:</strong> {vehicle.fitnessCertificate.number}</p>
+                      <p><strong>Expiry Date:</strong> {new Date(vehicle.fitnessCertificate.expiryDate).toLocaleDateString()}</p>
+                      {!isFitnessExpired && (
+                        <p className="text-sm text-muted-foreground">
+                          {daysUntilFitnessExpiry} days remaining
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <p><strong>Certificate Number:</strong> {vehicle.fitnessCertificate.number}</p>
-                    <p><strong>Expiry Date:</strong> {new Date(vehicle.fitnessCertificate.expiryDate).toLocaleDateString()}</p>
-                    {!isFitnessExpired && (
-                      <p className="text-sm text-muted-foreground">
-                        {daysUntilFitnessExpiry} days remaining
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

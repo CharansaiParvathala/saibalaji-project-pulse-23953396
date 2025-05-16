@@ -28,11 +28,30 @@ export default function Statistics() {
     
     // Load data
     setProjects(getProjects());
-    setTodayPayments(getRecentPayments(1));
-    setWeekPayments(getRecentPayments(7));
-    setMonthPayments(getRecentPayments(30));
-    setTodayEntries(getRecentEntries(1));
-    setWeekEntries(getRecentEntries(7));
+    
+    const allPayments = getPaymentRequests();
+    const allEntries = getProgressEntries();
+    
+    // Filter data by time periods
+    const now = new Date();
+    const oneDayAgo = new Date(now);
+    oneDayAgo.setDate(now.getDate() - 1);
+    
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    
+    // Filter payments
+    setTodayPayments(allPayments.filter(p => new Date(p.requestedAt) >= oneDayAgo));
+    setWeekPayments(allPayments.filter(p => new Date(p.requestedAt) >= sevenDaysAgo));
+    setMonthPayments(allPayments.filter(p => new Date(p.requestedAt) >= thirtyDaysAgo));
+    
+    // Filter entries
+    setTodayEntries(allEntries.filter(e => new Date(e.date) >= oneDayAgo));
+    setWeekEntries(allEntries.filter(e => new Date(e.date) >= sevenDaysAgo));
+    
     setLoading(false);
   }, []);
 

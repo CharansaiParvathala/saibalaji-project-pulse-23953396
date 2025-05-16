@@ -1,5 +1,6 @@
 
 import { PaymentRequest, ProgressEntry, Project } from "@/types";
+import { getProgressEntries, getPaymentRequests } from "@/lib/storage";
 
 // Color palette for charts
 export const COLORS = [
@@ -62,6 +63,46 @@ export const prepareStatusData = (payments: PaymentRequest[]) => {
   }));
 };
 
+// Helper function to prepare data for leader performance chart
+export const prepareLeaderData = (entries: ProgressEntry[]) => {
+  const leaderCounts: Record<string, number> = {};
+  
+  entries.forEach((entry) => {
+    if (!leaderCounts[entry.submittedBy]) {
+      leaderCounts[entry.submittedBy] = 0;
+    }
+    leaderCounts[entry.submittedBy]++;
+  });
+  
+  return Object.keys(leaderCounts).map((leader) => ({
+    name: `Leader ${leader.substring(0, 5)}`,
+    entries: leaderCounts[leader]
+  }));
+};
+
+// Helper function to prepare data for project activity chart
+export const prepareProjectData = (entries: ProgressEntry[], projects: Project[]) => {
+  const projectCounts: Record<string, number> = {};
+  const projectNames: Record<string, string> = {};
+  
+  // Create a mapping of project IDs to names
+  projects.forEach((project) => {
+    projectNames[project.id] = project.name;
+  });
+  
+  entries.forEach((entry) => {
+    if (!projectCounts[entry.projectId]) {
+      projectCounts[entry.projectId] = 0;
+    }
+    projectCounts[entry.projectId]++;
+  });
+  
+  return Object.keys(projectCounts).map((projectId) => ({
+    name: projectNames[projectId] || `Project ${projectId.substring(0, 5)}`,
+    count: projectCounts[projectId]
+  }));
+};
+
 // Helper function to calculate project progress
 export const calculateProjectProgress = (
   project: Project, 
@@ -78,4 +119,27 @@ export const calculateProjectProgress = (
   );
   
   return Math.min(100, (totalCompletedDistance / project.totalDistance) * 100);
+};
+
+// Functions to get recent data
+export const getRecentPayments = (days: number): PaymentRequest[] => {
+  const allPayments = getPaymentRequests();
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+  
+  return allPayments.filter(payment => {
+    const paymentDate = new Date(payment.requestedAt);
+    return paymentDate >= cutoffDate;
+  });
+};
+
+export const getRecentEntries = (days: number): ProgressEntry[] => {
+  const allEntries = getProgressEntries();
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+  
+  return allEntries.filter(entry => {
+    const entryDate = new Date(entry.date);
+    return entryDate >= cutoffDate;
+  });
 };

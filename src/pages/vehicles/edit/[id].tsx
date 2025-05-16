@@ -20,6 +20,7 @@ export default function EditVehicle() {
   // Form state
   const [model, setModel] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
+  const [type, setType] = useState<"truck" | "car" | "bike">("truck");
   const [pollutionNumber, setPollutionNumber] = useState("");
   const [pollutionExpiry, setPollutionExpiry] = useState("");
   const [fitnessNumber, setFitnessNumber] = useState("");
@@ -33,16 +34,22 @@ export default function EditVehicle() {
       setVehicle(vehicleData);
       setModel(vehicleData.model);
       setRegistrationNumber(vehicleData.registrationNumber);
-      setPollutionNumber(vehicleData.pollutionCertificate.number);
+      setType(vehicleData.type);
       
-      // Format date for input type="date"
-      const pollutionDate = new Date(vehicleData.pollutionCertificate.expiryDate);
-      setPollutionExpiry(pollutionDate.toISOString().split('T')[0]);
+      if (vehicleData.pollutionCertificate) {
+        setPollutionNumber(vehicleData.pollutionCertificate.number);
+        
+        // Format date for input type="date"
+        const pollutionDate = new Date(vehicleData.pollutionCertificate.expiryDate);
+        setPollutionExpiry(pollutionDate.toISOString().split('T')[0]);
+      }
       
-      setFitnessNumber(vehicleData.fitnessCertificate.number);
-      
-      const fitnessDate = new Date(vehicleData.fitnessCertificate.expiryDate);
-      setFitnessExpiry(fitnessDate.toISOString().split('T')[0]);
+      if (vehicleData.fitnessCertificate) {
+        setFitnessNumber(vehicleData.fitnessCertificate.number);
+        
+        const fitnessDate = new Date(vehicleData.fitnessCertificate.expiryDate);
+        setFitnessExpiry(fitnessDate.toISOString().split('T')[0]);
+      }
     }
     setLoading(false);
   }, [id]);
@@ -60,6 +67,7 @@ export default function EditVehicle() {
         ...vehicle,
         model,
         registrationNumber,
+        type,
         pollutionCertificate: {
           number: pollutionNumber,
           expiryDate: new Date(pollutionExpiry).toISOString()

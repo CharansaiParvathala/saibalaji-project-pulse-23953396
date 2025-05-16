@@ -20,10 +20,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const vehicleSchema = z.object({
   model: z.string().min(2, "Model is required"),
   registrationNumber: z.string().min(3, "Registration number is required"),
+  type: z.enum(["truck", "car", "bike"], { required_error: "Vehicle type is required" }),
   pollutionCertificateNumber: z.string().min(3, "Pollution certificate number is required"),
   pollutionExpiryDate: z.string().refine(val => !!val, "Expiry date is required"),
   fitnessCertificateNumber: z.string().min(3, "Fitness certificate number is required"),
@@ -42,6 +50,7 @@ export default function AddVehicle() {
     defaultValues: {
       model: "",
       registrationNumber: "",
+      type: "truck",
       pollutionCertificateNumber: "",
       pollutionExpiryDate: new Date().toISOString().split('T')[0],
       fitnessCertificateNumber: "",
@@ -56,6 +65,7 @@ export default function AddVehicle() {
         id: generateId(),
         model: values.model,
         registrationNumber: values.registrationNumber,
+        type: values.type,
         pollutionCertificate: {
           number: values.pollutionCertificateNumber,
           expiryDate: values.pollutionExpiryDate,
@@ -120,6 +130,29 @@ export default function AddVehicle() {
                       <FormControl>
                         <Input placeholder="e.g. KA01AB1234" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vehicle Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select vehicle type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="truck">Truck</SelectItem>
+                          <SelectItem value="car">Car</SelectItem>
+                          <SelectItem value="bike">Bike</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

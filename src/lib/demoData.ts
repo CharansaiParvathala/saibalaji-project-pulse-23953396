@@ -25,6 +25,7 @@ export const generateDemoData = () => {
       createdBy: "user1",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
       status: "active",
+      totalDistance: 10000
     },
     {
       id: "proj2",
@@ -33,6 +34,7 @@ export const generateDemoData = () => {
       createdBy: "user2",
       createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
       status: "active",
+      totalDistance: 5000
     },
     {
       id: "proj3",
@@ -41,6 +43,7 @@ export const generateDemoData = () => {
       createdBy: "user3",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
       status: "completed",
+      totalDistance: 8000
     }
   ];
   
@@ -50,29 +53,25 @@ export const generateDemoData = () => {
       id: "user1",
       name: "Rajesh Leader",
       email: "leader@example.com",
-      role: "leader",
-      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+      role: "leader"
     },
     {
       id: "user2",
       name: "Priya Checker",
       email: "checker@example.com",
-      role: "checker",
-      createdAt: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString(),
+      role: "checker"
     },
     {
       id: "user3",
       name: "Vijay Owner",
       email: "owner@example.com",
-      role: "owner",
-      createdAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
+      role: "owner"
     },
     {
       id: "user4",
       name: "Anil Admin",
       email: "admin@example.com",
-      role: "admin",
-      createdAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
+      role: "admin"
     }
   ];
   
@@ -82,6 +81,7 @@ export const generateDemoData = () => {
       id: "veh1",
       model: "Tata Truck 407",
       registrationNumber: "MH02 AB1234",
+      type: "truck",
       pollutionCertificate: {
         number: "POL123456",
         expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
@@ -95,6 +95,7 @@ export const generateDemoData = () => {
       id: "veh2",
       model: "JCB Excavator",
       registrationNumber: "MH04 CD5678",
+      type: "truck",
       pollutionCertificate: {
         number: "POL789012",
         expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
@@ -134,7 +135,7 @@ export const generateDemoData = () => {
               url: "https://picsum.photos/seed/" + Math.random() + "/200/300",
               metadata: {
                 timestamp: date.toISOString(),
-                location: { latitude: 19.076 + Math.random() * 0.1, longitude: 72.877 + Math.random() * 0.1 }
+                location: { latitude: 19.076 + Math.random() * 0.1, longitude: 72.877 + Math.random() * 0.1, accuracy: 10 }
               }
             }
           ],
@@ -142,7 +143,9 @@ export const generateDemoData = () => {
           submittedBy: users[randomBetween(0, users.length - 1)].id,
           submittedAt: date.toISOString(),
           status: Math.random() > 0.7 ? "submitted" : "locked",
-          isLocked: Math.random() > 0.7
+          isLocked: Math.random() > 0.7,
+          distanceCompleted: randomBetween(100, 500),
+          timeSpent: randomBetween(2, 8)
         };
         
         // Add some payment requests associated with this entry
@@ -179,7 +182,7 @@ export const generateDemoData = () => {
                   url: "https://picsum.photos/seed/" + Math.random() + "/200/300",
                   metadata: {
                     timestamp: requestedDate.toISOString(),
-                    location: { latitude: 19.076 + Math.random() * 0.1, longitude: 72.877 + Math.random() * 0.1 }
+                    location: { latitude: 19.076 + Math.random() * 0.1, longitude: 72.877 + Math.random() * 0.1, accuracy: 10 }
                   }
                 }
               ],
@@ -189,8 +192,6 @@ export const generateDemoData = () => {
               reviewedBy: paymentStatus !== "pending" ? users[randomBetween(0, users.length - 1)].id : undefined,
               reviewedAt: paymentStatus !== "pending" ? new Date(requestedDate.getTime() + randomBetween(1, 48) * 60 * 60 * 1000).toISOString() : undefined,
               comments: paymentStatus === "rejected" ? "Insufficient documentation provided" : undefined,
-              paymentDate: paymentStatus === "scheduled" ? new Date(requestedDate.getTime() + randomBetween(24, 72) * 60 * 60 * 1000).toISOString() : 
-                         paymentStatus === "paid" ? new Date(requestedDate.getTime() + randomBetween(1, 24) * 60 * 60 * 1000).toISOString() : undefined,
               statusHistory: [{
                 status: "pending",
                 changedBy: entry.submittedBy,

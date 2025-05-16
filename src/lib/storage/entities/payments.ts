@@ -55,7 +55,7 @@ export function updatePaymentRequest(updatedRequest: PaymentRequest): PaymentReq
       const notification = {
         id: generateId(),
         userId: oldRequest.requestedBy,
-        type: "payment_status",
+        type: "payment_status" as const,
         title: `Payment Request ${updatedRequest.status.charAt(0).toUpperCase() + updatedRequest.status.slice(1)}`,
         message: `Your payment request of ₹${updatedRequest.amount.toFixed(2)} has been ${updatedRequest.status}`,
         relatedId: updatedRequest.id,

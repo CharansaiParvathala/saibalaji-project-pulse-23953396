@@ -51,8 +51,10 @@ export default function VehicleRegistry() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vehicles.map((vehicle) => {
-              const isPollutionExpired = new Date(vehicle.pollutionCertificate.expiryDate) < new Date();
-              const isFitnessExpired = new Date(vehicle.fitnessCertificate.expiryDate) < new Date();
+              const isPollutionExpired = vehicle.pollutionCertificate ? 
+                new Date(vehicle.pollutionCertificate.expiryDate) < new Date() : false;
+              const isFitnessExpired = vehicle.fitnessCertificate ? 
+                new Date(vehicle.fitnessCertificate.expiryDate) < new Date() : false;
               
               return (
                 <Card key={vehicle.id}>
