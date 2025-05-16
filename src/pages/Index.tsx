@@ -5,14 +5,22 @@ import { useAuth } from "@/hooks/useAuth";
 const Index = () => {
   const { isAuthenticated } = useAuth();
   
-  // Add a console log to help debug
+  // Add detailed console logs to help debug
   console.log("Index component rendered, isAuthenticated:", isAuthenticated);
   
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" />;
+  // Make sure we're handling all possible states
+  if (isAuthenticated === undefined) {
+    // Still loading auth state
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  return <Navigate to="/login" />;
+  if (isAuthenticated) {
+    console.log("User is authenticated, redirecting to dashboard");
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  console.log("User is not authenticated, redirecting to login");
+  return <Navigate to="/login" replace />;
 };
 
 export default Index;

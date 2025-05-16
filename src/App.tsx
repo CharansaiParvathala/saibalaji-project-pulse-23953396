@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
@@ -30,6 +29,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Routes>
+        {/* Make sure the index route is the first one */}
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -37,8 +37,8 @@ function App() {
         
         {/* Projects */}
         <Route path="/projects" element={<Projects />} />
-        <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/projects/create" element={<CreateProject />} />
+        <Route path="/projects/:id" element={<ProjectDetails />} />
         
         {/* Progress */}
         <Route path="/progress" element={<Projects showProgressButton={true} />} />
@@ -60,15 +60,15 @@ function App() {
         
         {/* Vehicles */}
         <Route path="/vehicles" element={<VehiclesList />} />
-        <Route path="/vehicles/:id" element={<VehicleDetails />} />
         <Route path="/vehicles/add" element={<AddVehicle />} />
+        <Route path="/vehicles/:id" element={<VehicleDetails />} />
         <Route path="/vehicles/edit/:id" element={<EditVehicle />} />
         
         {/* Submissions */}
         <Route path="/submissions" element={<Submissions />} />
         <Route path="/submissions/:id" element={<ReviewSubmission />} />
         
-        {/* 404 */}
+        {/* 404 - Always keep this as the last route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
