@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -34,6 +35,14 @@ export default function RequestPayment() {
   const [progressEntries, setProgressEntries] = useState<ProgressEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState("");
   const [purposes, setPurposes] = useState<PaymentPurpose[]>([]);
+  const [purposeCosts, setPurposeCosts] = useState<Record<PaymentPurpose, string>>({
+    food: "",
+    fuel: "",
+    labour: "",
+    vehicle: "",
+    water: "",
+    other: "",
+  });
 
   const availablePurposes: { value: PaymentPurpose; label: string }[] = [
     { value: "food", label: "Food" },
@@ -43,6 +52,17 @@ export default function RequestPayment() {
     { value: "water", label: "Water" },
     { value: "other", label: "Other" },
   ];
+
+  // Calculate total amount from purpose costs
+  useEffect(() => {
+    const total = Object.values(purposeCosts)
+      .filter(cost => cost !== "")
+      .reduce((sum, cost) => sum + parseFloat(cost || "0"), 0);
+    
+    if (total > 0) {
+      setAmount(total.toString());
+    }
+  }, [purposeCosts]);
 
   useEffect(() => {
     // Load projects for the current user
@@ -120,9 +140,19 @@ export default function RequestPayment() {
   const handlePurposeToggle = (purpose: PaymentPurpose) => {
     if (purposes.includes(purpose)) {
       setPurposes(purposes.filter(p => p !== purpose));
+      // Clear the cost when purpose is deselected
+      const updatedCosts = { ...purposeCosts };
+      updatedCosts[purpose] = "";
+      setPurposeCosts(updatedCosts);
     } else {
       setPurposes([...purposes, purpose]);
     }
+  };
+
+  const handleCostChange = (purpose: PaymentPurpose, value: string) => {
+    const updatedCosts = { ...purposeCosts };
+    updatedCosts[purpose] = value;
+    setPurposeCosts(updatedCosts);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,6 +194,20 @@ export default function RequestPayment() {
       return;
     }
     
+    // Validate that all selected purposes have costs
+    const invalidPurposes = purposes.filter(
+      purpose => !purposeCosts[purpose] || isNaN(parseFloat(purposeCosts[purpose])) || parseFloat(purposeCosts[purpose]) <= 0
+    );
+    
+    if (invalidPurposes.length > 0) {
+      toast({
+        title: "Error",
+        description: "All selected purposes must have valid costs",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       toast({
         title: "Error",
@@ -187,6 +231,13 @@ export default function RequestPayment() {
       
       const projectId = selectedProject;
       const progressId = selectedEntry;
+      
+      // Convert purpose costs to numbers
+      const parsedPurposeCosts: Record<PaymentPurpose, number> = {} as Record<PaymentPurpose, number>;
+      purposes.forEach(purpose => {
+        parsedPurposeCosts[purpose] = parseFloat(purposeCosts[purpose]);
+      });
+      
       // Get current location
       let currentLocation: GeoLocation = { latitude: 0, longitude: 0, accuracy: 0 };
       try {
@@ -204,6 +255,7 @@ export default function RequestPayment() {
         amount: parseFloat(amount),
         description,
         purposes,
+        purposeCosts: parsedPurposeCosts,
         photos,
         status: "pending",
         requestedBy: user?.id || "Anonymous",
@@ -234,8 +286,8 @@ export default function RequestPayment() {
         description: "Your request has been submitted for approval."
       });
       
-      // Navigate back to the submissions page
-      navigate("/submissions");
+      // Navigate back to the dashboard
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error submitting payment request:", error);
       toast({
@@ -329,8 +381,30 @@ export default function RequestPayment() {
                 </div>
               </div>
               
+              {purposes.length > 0 && (
+                <div className="space-y-4 mt-4">
+                  <Label>Cost for each purpose</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {purposes.map((purpose) => (
+                      <div key={purpose} className="space-y-2">
+                        <Label htmlFor={`cost-${purpose}`}>{purpose.charAt(0).toUpperCase() + purpose.slice(1)} Cost (₹)</Label>
+                        <Input
+                          id={`cost-${purpose}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={purposeCosts[purpose]}
+                          onChange={(e) => handleCostChange(purpose, e.target.value)}
+                          required
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <div>
-                <Label htmlFor="amount">Amount (₹)</Label>
+                <Label htmlFor="amount">Total Amount (₹)</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -339,7 +413,14 @@ export default function RequestPayment() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
+                  readOnly={purposes.length > 0}
+                  className={purposes.length > 0 ? "bg-gray-100" : ""}
                 />
+                {purposes.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total is calculated automatically from the purpose costs above
+                  </p>
+                )}
               </div>
               
               <div>

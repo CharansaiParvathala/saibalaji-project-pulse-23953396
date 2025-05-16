@@ -86,6 +86,14 @@ const App = () => (
                 element={<AddProgress />}
               />
               <Route
+                path="/progress"
+                element={
+                  <Layout requiredRoles={["leader", "admin"]}>
+                    <Projects showProgressButton={true} />
+                  </Layout>
+                }
+              />
+              <Route
                 path="/payments/request"
                 element={<RequestPayment />}
               />

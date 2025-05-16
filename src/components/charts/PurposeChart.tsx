@@ -1,14 +1,49 @@
 
 import { PaymentRequest } from "@/types";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { COLORS, preparePurposeData } from "@/lib/statisticsHelpers";
+import { COLORS } from "@/lib/statisticsHelpers";
 
 interface PurposeChartProps {
   payments: PaymentRequest[];
   title: string;
 }
 
+// New helper function to prepare purpose data with costs
+const preparePurposeData = (payments: PaymentRequest[]) => {
+  const purposeTotals: Record<string, number> = {};
+  
+  payments.forEach((payment) => {
+    // If we have purposeCosts, use them
+    if (payment.purposeCosts) {
+      Object.entries(payment.purposeCosts).forEach(([purpose, cost]) => {
+        if (!purposeTotals[purpose]) {
+          purposeTotals[purpose] = 0;
+        }
+        purposeTotals[purpose] += cost;
+      });
+    } else {
+      // Fall back to old method for backward compatibility
+      const purposeCount = payment.purposes.length;
+      const amountPerPurpose = payment.amount / purposeCount;
+      
+      payment.purposes.forEach((purpose) => {
+        if (!purposeTotals[purpose]) {
+          purposeTotals[purpose] = 0;
+        }
+        purposeTotals[purpose] += amountPerPurpose;
+      });
+    }
+  });
+  
+  return Object.keys(purposeTotals).map((purpose) => ({
+    name: purpose.charAt(0).toUpperCase() + purpose.slice(1),
+    value: parseFloat(purposeTotals[purpose].toFixed(2)),
+  }));
+};
+
 export function PurposeChart({ payments, title }: PurposeChartProps) {
+  const data = preparePurposeData(payments);
+  
   return (
     <div className="h-80">
       {payments.length === 0 ? (
@@ -19,7 +54,7 @@ export function PurposeChart({ payments, title }: PurposeChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={preparePurposeData(payments)}
+              data={data}
               cx="50%"
               cy="50%"
               labelLine={false}
@@ -28,7 +63,7 @@ export function PurposeChart({ payments, title }: PurposeChartProps) {
               dataKey="value"
               label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
             >
-              {preparePurposeData(payments).map((entry, index) => (
+              {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>

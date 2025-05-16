@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -16,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { generateId, getProject, getVehicles, getDrivers, saveProgressEntry } from "@/lib/storage";
 import { getCurrentLocation } from "@/lib/geolocation";
-import { GeoLocation, Photo, Vehicle, Driver, MeterReading } from "@/types";
+import { GeoLocation, Photo, Vehicle, Driver, MeterReading, Project } from "@/types";
 
 export default function AddProgress() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -24,7 +25,7 @@ export default function AddProgress() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const [project, setProject] = useState(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -38,6 +39,8 @@ export default function AddProgress() {
   const [endMeterReading, setEndMeterReading] = useState<MeterReading | null>(null);
   const [loading, setLoading] = useState(false);
   const [useVehicle, setUseVehicle] = useState(false);
+  const [distanceCompleted, setDistanceCompleted] = useState("");
+  const [timeSpent, setTimeSpent] = useState("");
 
   useEffect(() => {
     if (!projectId) return;
@@ -207,6 +210,25 @@ export default function AddProgress() {
         return;
       }
     }
+
+    // Validate distance and time
+    if (!distanceCompleted || isNaN(parseFloat(distanceCompleted)) || parseFloat(distanceCompleted) < 0) {
+      toast({
+        title: "Error",
+        description: "You must enter a valid distance completed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!timeSpent || isNaN(parseFloat(timeSpent)) || parseFloat(timeSpent) <= 0) {
+      toast({
+        title: "Error",
+        description: "You must enter valid time spent",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setLoading(true);
@@ -233,6 +255,8 @@ export default function AddProgress() {
         date: date,
         photos: photos,
         vehicleUsed: vehicleData,
+        distanceCompleted: parseFloat(distanceCompleted),
+        timeSpent: parseFloat(timeSpent),
         paymentRequests: [],
         submittedBy: user.id,
         submittedAt: new Date().toISOString(),
@@ -269,6 +293,17 @@ export default function AddProgress() {
     );
   }
 
+  // Calculate project progress percentage if available
+  const calculateProgressPercentage = () => {
+    if (!project.totalDistance || !project.totalDistance) {
+      return "N/A";
+    }
+    
+    const currentDistance = parseFloat(distanceCompleted) || 0;
+    const progressPercentage = (currentDistance / project.totalDistance) * 100;
+    return progressPercentage.toFixed(2) + "%";
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -295,6 +330,61 @@ export default function AddProgress() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Work Progress</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="distanceCompleted">Distance Completed (meters)</Label>
+                  <Input
+                    id="distanceCompleted"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={project.totalDistance || undefined}
+                    value={distanceCompleted}
+                    onChange={(e) => setDistanceCompleted(e.target.value)}
+                    required
+                  />
+                  {project.totalDistance && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total project distance: {project.totalDistance} meters
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="timeSpent">Time Spent (hours)</Label>
+                  <Input
+                    id="timeSpent"
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    value={timeSpent}
+                    onChange={(e) => setTimeSpent(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              
+              {project.totalDistance && distanceCompleted && (
+                <div className="mt-4">
+                  <Label>This Entry's Progress</Label>
+                  <div className="mt-2 flex items-center">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mr-2">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
+                        style={{ width: `${Math.min(100, (parseFloat(distanceCompleted) / project.totalDistance) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-sm">{calculateProgressPercentage()}</span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

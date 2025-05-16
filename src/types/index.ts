@@ -1,62 +1,37 @@
-
-export type UserRole = "leader" | "checker" | "owner" | "admin";
-
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
-  createdAt: string;
+  role: "leader" | "checker" | "owner" | "admin";
+}
+
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+export interface Photo {
+  id: string;
+  url: string;
+  metadata: {
+    timestamp: string;
+    location: GeoLocation;
+  };
 }
 
 export interface Vehicle {
   id: string;
   model: string;
   registrationNumber: string;
-  pollutionCertificate: {
-    number: string;
-    expiryDate: string;
-  };
-  fitnessCertificate: {
-    number: string;
-    expiryDate: string;
-  };
-  additionalDetails?: Record<string, string>;
+  type: "truck" | "car" | "bike";
 }
 
 export interface Driver {
   id: string;
   name: string;
   licenseNumber: string;
-  licenseType: string;
-  experienceYears: number;
-  additionalDetails?: Record<string, string>;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  numWorkers: number;
-  createdBy: string; // user ID
-  createdAt: string;
-  status: "active" | "completed" | "cancelled";
-}
-
-export interface GeoLocation {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-}
-
-export interface PhotoMetadata {
-  timestamp: string;
-  location: GeoLocation;
-}
-
-export interface Photo {
-  id: string;
-  url: string;
-  metadata: PhotoMetadata;
+  type: "internal" | "external";
 }
 
 export interface MeterReading {
@@ -69,26 +44,32 @@ export interface MeterReading {
 
 export type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
 
-export interface PaymentRequest {
-  id: string;
-  projectId: string;
-  purposes: PaymentPurpose[];
-  amount: number;
-  description: string;
-  photos: Photo[];
-  status: "pending" | "approved" | "rejected" | "paid" | "scheduled";
-  requestedBy: string; // user ID
-  requestedAt: string;
-  reviewedBy?: string; // user ID
-  reviewedAt?: string;
+export interface PaymentStatusHistoryEntry {
+  status: PaymentRequest["status"];
+  changedBy: string;
+  changedAt: string;
   comments?: string;
-  paymentDate?: string;
-  statusHistory?: {
-    status: "pending" | "approved" | "rejected" | "paid" | "scheduled";
-    changedBy: string; // user ID
-    changedAt: string;
-    comments?: string;
-  }[];
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: "payment_status" | "progress_update" | "general";
+  title: string;
+  message: string;
+  relatedId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  numWorkers: number;
+  createdBy: string;
+  createdAt: string;
+  status: "active" | "completed" | "on-hold";
+  totalDistance?: number; // Total work distance in meters
 }
 
 export interface ProgressEntry {
@@ -108,26 +89,35 @@ export interface ProgressEntry {
       end: MeterReading;
     };
   };
-  paymentRequests: string[]; // Changed from PaymentRequest[] to string[] to store IDs
-  submittedBy: string; // user ID
+  distanceCompleted?: number; // Distance completed in meters
+  timeSpent?: number; // Time spent in hours
+  paymentRequests: string[];
+  submittedBy: string;
   submittedAt: string;
-  status: "draft" | "submitted" | "locked" | "correction-requested";
+  status: "draft" | "submitted" | "approved" | "correction-requested" | "locked";
+  isLocked: boolean;
   correctionRequest?: {
     message: string;
     requestedAt: string;
-    requestedBy: string; // user ID
+    requestedBy: string;
   };
-  isLocked: boolean;
 }
 
-// New interface for notifications
-export interface Notification {
+export interface PaymentRequest {
   id: string;
-  userId: string; // recipient
-  type: "payment_status" | "progress_status" | "correction_request";
-  title: string;
-  message: string;
-  relatedId: string; // ID of the related entity (payment, progress, etc.)
-  isRead: boolean;
-  createdAt: string;
+  projectId: string;
+  amount: number;
+  description: string;
+  purposes: PaymentPurpose[];
+  purposeCosts?: Record<PaymentPurpose, number>; // Store cost for each purpose
+  photos: Photo[];
+  status: "pending" | "approved" | "rejected" | "scheduled" | "paid";
+  requestedBy: string;
+  requestedAt: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  comments?: string;
+  statusHistory?: PaymentStatusHistoryEntry[];
+  scheduledDate?: string;
+  paidDate?: string;
 }

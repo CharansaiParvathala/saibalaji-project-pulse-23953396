@@ -1,48 +1,83 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { getProjects } from "@/lib/storage";
+import { Plus, FileEdit } from "lucide-react";
+import { getProjects, getProgressEntries } from "@/lib/storage";
+import { useAuth } from "@/hooks/useAuth";
 import { Project } from "@/types";
 
-export default function Projects() {
+interface ProjectsProps {
+  showProgressButton?: boolean;
+}
+
+export default function Projects({ showProgressButton = false }: ProjectsProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [projectProgress, setProjectProgress] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const fetchProjects = () => {
+    // Load projects and calculate progress
+    const loadProjects = async () => {
       const allProjects = getProjects();
+      const visibleProjects = user?.role === "admin"
+        ? allProjects
+        : allProjects.filter(project => project.createdBy === user?.id);
       
-      let filteredProjects = allProjects;
-      // For leaders, only show their created projects
-      if (user && user.role === "leader") {
-        filteredProjects = allProjects.filter(project => project.createdBy === user.id);
-      }
+      setProjects(visibleProjects);
+
+      // Get progress data
+      const progressEntries = getProgressEntries();
       
-      setProjects(filteredProjects);
+      // Calculate progress for each project
+      const progress: Record<string, number> = {};
+      visibleProjects.forEach(project => {
+        if (project.totalDistance) {
+          const projectEntries = progressEntries.filter(entry => entry.projectId === project.id);
+          const totalCompletedDistance = projectEntries.reduce(
+            (sum, entry) => sum + (entry.distanceCompleted || 0),
+            0
+          );
+          progress[project.id] = Math.min(100, (totalCompletedDistance / project.totalDistance) * 100);
+        } else {
+          progress[project.id] = 0;
+        }
+      });
+      
+      setProjectProgress(progress);
       setLoading(false);
     };
 
-    fetchProjects();
+    loadProjects();
   }, [user]);
+
+  const handleCreateProject = () => {
+    navigate("/projects/create");
+  };
+
+  const buttonLabel = showProgressButton ? "Add Progress" : "View Details";
+  const buttonAction = showProgressButton
+    ? (projectId: string) => navigate(`/progress/add/${projectId}`)
+    : (projectId: string) => navigate(`/projects/${projectId}`);
+  const buttonIcon = showProgressButton ? FileEdit : undefined;
 
   return (
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Projects</h1>
-          {user && (user.role === "leader" || user.role === "admin") && (
-            <Link to="/projects/create">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Project
-              </Button>
-            </Link>
+          <h1 className="text-3xl font-bold">
+            {showProgressButton ? "Select Project to Add Progress" : "Projects"}
+          </h1>
+          
+          {(user?.role === "leader" || user?.role === "admin") && !showProgressButton && (
+            <Button onClick={handleCreateProject}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Project
+            </Button>
           )}
         </div>
 
@@ -54,33 +89,51 @@ export default function Projects() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8 text-center">
               <p className="text-muted-foreground mb-4">No projects found</p>
-              {user && (user.role === "leader" || user.role === "admin") && (
-                <Link to="/projects/create">
-                  <Button>Create Your First Project</Button>
-                </Link>
+              {(user?.role === "leader" || user?.role === "admin") && (
+                <Button onClick={handleCreateProject}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Project
+                </Button>
               )}
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <Card key={project.id}>
-                <CardHeader>
-                  <CardTitle>{project.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><strong>Workers:</strong> {project.numWorkers}</p>
-                    <p><strong>Status:</strong> {project.status}</p>
-                    <p><strong>Created:</strong> {new Date(project.createdAt).toLocaleDateString()}</p>
-                    <div className="pt-4">
-                      <Link to={`/projects/${project.id}`}>
-                        <Button variant="outline" className="w-full">
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </Button>
-                      </Link>
+              <Card key={project.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="p-6">
+                    <h3 className="font-semibold text-lg mb-2">{project.name}</h3>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      <p>Workers: {project.numWorkers}</p>
+                      <p>Status: {project.status.charAt(0).toUpperCase() + project.status.slice(1)}</p>
+                      {project.totalDistance !== undefined && (
+                        <p>Total Distance: {project.totalDistance} meters</p>
+                      )}
                     </div>
+                    
+                    {project.totalDistance !== undefined && (
+                      <div className="mt-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${projectProgress[project.id] || 0}%` }}
+                          />
+                        </div>
+                        <p className="text-xs mt-1 text-right">{(projectProgress[project.id] || 0).toFixed(1)}% complete</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t p-4 bg-muted/20">
+                    <Button 
+                      onClick={() => buttonAction(project.id)}
+                      variant="default"
+                      className="w-full"
+                    >
+                      {buttonIcon && <buttonIcon className="mr-2 h-4 w-4" />}
+                      {buttonLabel}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
