@@ -1,398 +1,449 @@
 
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, Link } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Mail,
   Lock,
   User,
   UserPlus,
   LogIn,
-  ArrowRight,
   CheckCircle,
-  AlertTriangle,
+  Menu,
+  X,
+  ChevronRight,
+  Building2,
 } from "lucide-react";
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<UserRole>("checker");
   const [isAgree, setIsAgree] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState({
+    email: "",
+    password: "",
+    name: "",
+    terms: "",
+  });
   const { login, signup, isAuthenticated, isLoading } = useSupabaseAuth();
   const { toast } = useToast();
+  const { theme } = useTheme();
+  
+  useEffect(() => {
+    // Reset form errors when switching tabs
+    setFormErrors({
+      email: "",
+      password: "",
+      name: "",
+      terms: "",
+    });
+  }, [activeTab]);
+
+  const validateEmail = (email: string) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
+  const validateForm = () => {
+    const errors = {
+      email: "",
+      password: "",
+      name: "",
+      terms: "",
+    };
+    
+    let isValid = true;
+
+    if (!email) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      errors.email = "Invalid email format";
+      isValid = false;
+    }
+
+    if (!password) {
+      errors.password = "Password is required";
+      isValid = false;
+    } else if (password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+      isValid = false;
+    }
+
+    if (activeTab === "signup") {
+      if (!name) {
+        errors.name = "Name is required";
+        isValid = false;
+      }
+      
+      if (!isAgree) {
+        errors.terms = "You must agree to the terms";
+        isValid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast({
-        title: "Missing fields",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
+    if (!validateForm()) {
       return;
     }
     
     try {
       await login(email, password);
-      console.log("Login attempt completed"); // Debug
+      console.log("Login attempt completed");
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login failed",
-        description: String(error),
-        variant: "destructive",
-      });
     }
   };
   
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !name) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!isAgree) {
-      toast({
-        title: "Terms & Conditions",
-        description: "Please agree to the terms and conditions",
-        variant: "destructive",
-      });
+    if (!validateForm()) {
       return;
     }
     
     try {
       await signup(email, password, name, role);
-      toast({
-        title: "Success!",
-        description: "Your account has been created. Please log in.",
-      });
-      setIsLogin(true);
-      console.log("Signup attempt completed"); // Debug
+      setActiveTab("login");
+      setEmail("");
+      setPassword("");
+      console.log("Signup attempt completed");
     } catch (error) {
       console.error("Signup error:", error);
-      toast({
-        title: "Signup failed",
-        description: String(error),
-        variant: "destructive",
-      });
     }
   };
 
   if (isAuthenticated) {
-    console.log("User is authenticated, redirecting to dashboard"); // Debug
+    console.log("User is authenticated, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
-      <div className="flex flex-col md:flex-row flex-1">
-        {/* Left side - Branding */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-8 md:p-16 bg-black/40 backdrop-blur-lg">
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Sai Balaji Construction</h1>
-            <p className="text-xl text-white/80 mb-6">
-              Manage your construction projects with ease and precision
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-950 dark:via-purple-950 dark:to-pink-950">
+      {/* Header with Theme Toggle */}
+      <header className="w-full p-4 flex justify-between items-center z-10">
+        <div className="flex items-center">
+          <Building2 className="h-8 w-8 text-white mr-2" />
+          <h1 className="text-xl font-bold text-white">Sai Balaji Construction</h1>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            className="md:hidden text-white p-2 rounded-full hover:bg-white/10"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+      </header>
+      
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden absolute top-16 right-4 w-48 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-20">
+          <a href="#" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+            About Us <ChevronRight className="ml-auto h-4 w-4" />
+          </a>
+          <a href="#" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+            Services <ChevronRight className="ml-auto h-4 w-4" />
+          </a>
+          <a href="#" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+            Contact <ChevronRight className="ml-auto h-4 w-4" />
+          </a>
+        </div>
+      )}
+      
+      <main className="flex-1 flex flex-col md:flex-row items-center justify-center p-4 md:p-8">
+        {/* Left side - Company Info (hidden on mobile) */}
+        <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center p-8 text-white">
+          <div className="max-w-md text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Building Excellence, Delivering Trust
+            </h1>
+            <p className="text-xl mb-8">
+              Sai Balaji Construction provides top-tier construction services with precision and reliability.
             </p>
-            <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
-              <div className="flex flex-col items-center p-4 bg-white/10 backdrop-blur-md rounded-xl">
-                <span className="text-white/90 text-lg font-bold">15+</span>
-                <span className="text-white/70 text-sm">Years Experience</span>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl">
+                <p className="text-2xl font-bold">15+</p>
+                <p className="text-sm">Years Experience</p>
               </div>
-              <div className="flex flex-col items-center p-4 bg-white/10 backdrop-blur-md rounded-xl">
-                <span className="text-white/90 text-lg font-bold">200+</span>
-                <span className="text-white/70 text-sm">Projects</span>
+              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl">
+                <p className="text-2xl font-bold">200+</p>
+                <p className="text-sm">Projects Completed</p>
               </div>
-              <div className="flex flex-col items-center p-4 bg-white/10 backdrop-blur-md rounded-xl">
-                <span className="text-white/90 text-lg font-bold">500+</span>
-                <span className="text-white/70 text-sm">Workers</span>
+              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl">
+                <p className="text-2xl font-bold">500+</p>
+                <p className="text-sm">Workers Employed</p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Right side - Auth form */}
-        <div className="w-full md:w-1/2 flex justify-center items-center p-8 md:p-12 bg-white">
-          <div className="w-full max-w-md">
-            {/* Auth toggle */}
-            <div className="flex items-center mb-8 border-b border-gray-200">
-              <button
-                onClick={() => setIsLogin(true)}
-                className={`flex-1 py-4 text-center font-medium ${
-                  isLogin ? "text-purple-600 border-b-2 border-purple-600" : "text-gray-500"
-                }`}
+        
+        {/* Right side - Login/Signup Form */}
+        <div className="w-full md:w-1/2 flex justify-center items-center">
+          <Card className="w-full max-w-md border-0 shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold text-center">
+                {activeTab === "login" ? "Welcome Back" : "Create an Account"}
+              </CardTitle>
+              <CardDescription className="text-center">
+                {activeTab === "login" 
+                  ? "Enter your credentials to access your account" 
+                  : "Fill in your details to get started"}
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <Tabs 
+                value={activeTab} 
+                onValueChange={(v) => setActiveTab(v as "login" | "signup")} 
+                className="w-full"
               >
-                <LogIn className="inline mr-2 h-5 w-5" />
-                Login
-              </button>
-              <button
-                onClick={() => setIsLogin(false)}
-                className={`flex-1 py-4 text-center font-medium ${
-                  !isLogin ? "text-purple-600 border-b-2 border-purple-600" : "text-gray-500"
-                }`}
-              >
-                <UserPlus className="inline mr-2 h-5 w-5" />
-                Sign Up
-              </button>
-            </div>
-
-            {/* Login form */}
-            {isLogin ? (
-              <form onSubmit={handleLoginSubmit} className="space-y-6">
-                <h2 className="text-3xl font-bold text-gray-800 mb-6">Welcome back</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
-                      </label>
-                      <button
-                        type="button"
-                        className="text-sm text-purple-600 hover:text-purple-800"
-                        onClick={() =>
-                          toast({
-                            title: "Password Recovery",
-                            description: "Please contact your administrator to reset your password.",
-                          })
-                        }
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="password"
-                        type="password"
-                        placeholder="Enter your password"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg shadow-lg transform transition hover:-translate-y-0.5"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Logging in...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      Login <ArrowRight className="ml-2 h-5 w-5" />
-                    </span>
-                  )}
-                </button>
+                <TabsList className="grid grid-cols-2 mb-8 w-full">
+                  <TabsTrigger value="login" className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="signup" className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Sign Up</span>
+                  </TabsTrigger>
+                </TabsList>
                 
-                <p className="text-sm text-center text-gray-500 mt-6">
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    className="font-semibold text-purple-600 hover:text-purple-800"
-                    onClick={() => setIsLogin(false)}
-                  >
-                    Create one now
-                  </button>
-                </p>
-              </form>
-            ) : (
-              /* Sign up form */
-              <form onSubmit={handleSignupSubmit} className="space-y-6">
-                <h2 className="text-3xl font-bold text-gray-800 mb-6">Create your account</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="h-5 w-5 text-gray-400" />
+                <TabsContent value="login">
+                  <form onSubmit={handleLoginSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          id="email" 
+                          type="email" 
+                          placeholder="name@example.com" 
+                          className={`pl-10 ${formErrors.email ? 'border-red-500' : ''}`}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
                       </div>
-                      <input
-                        id="name"
-                        type="text"
-                        placeholder="John Doe"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                      />
+                      {formErrors.email && (
+                        <p className="text-sm text-red-500">{formErrors.email}</p>
+                      )}
                     </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                        <Link to="#" className="text-sm text-primary hover:underline">
+                          Forgot password?
+                        </Link>
                       </div>
-                      <input
-                        id="signup-email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-gray-400" />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          className={`pl-10 ${formErrors.password ? 'border-red-500' : ''}`}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
                       </div>
-                      <input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Create a strong password"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
+                      {formErrors.password && (
+                        <p className="text-sm text-red-500">{formErrors.password}</p>
+                      )}
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Password must be at least 6 characters long
-                    </p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
-                    </label>
-                    <select
-                      id="role"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as UserRole)}
-                      className="block w-full pl-3 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white"
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      disabled={isLoading}
                     >
-                      <option value="checker">Checker</option>
-                      <option value="leader">Leader</option>
-                      <option value="owner">Owner</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                      <input
-                        id="terms"
-                        type="checkbox"
-                        checked={isAgree}
-                        onChange={(e) => setIsAgree(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                      />
-                    </div>
-                    <div className="ml-3">
-                      <label htmlFor="terms" className="text-sm text-gray-700">
-                        I agree to the{" "}
-                        <a href="#" className="font-medium text-purple-600 hover:text-purple-800">
-                          Terms of Service
-                        </a>{" "}
-                        and{" "}
-                        <a href="#" className="font-medium text-purple-600 hover:text-purple-800">
-                          Privacy Policy
-                        </a>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg shadow-lg transform transition hover:-translate-y-0.5"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Creating Account...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      Create Account <UserPlus className="ml-2 h-5 w-5" />
-                    </span>
-                  )}
-                </button>
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Signing in...
+                        </div>
+                      ) : (
+                        <span className="flex items-center">
+                          Sign In <LogIn className="ml-2 h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
                 
-                <p className="text-sm text-center text-gray-500 mt-6">
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    className="font-semibold text-purple-600 hover:text-purple-800"
-                    onClick={() => setIsLogin(true)}
-                  >
-                    Log in now
-                  </button>
-                </p>
-              </form>
-            )}
-
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <div className="flex items-center justify-center">
-                <AlertTriangle className="text-yellow-500 h-5 w-5 mr-2" />
-                <p className="text-xs text-gray-500">
-                  For testing: Use email "admin@example.com" with password "password"
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignupSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          id="name" 
+                          type="text" 
+                          placeholder="John Doe" 
+                          className={`pl-10 ${formErrors.name ? 'border-red-500' : ''}`}
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                        />
+                      </div>
+                      {formErrors.name && (
+                        <p className="text-sm text-red-500">{formErrors.name}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          id="signup-email" 
+                          type="email" 
+                          placeholder="name@example.com" 
+                          className={`pl-10 ${formErrors.email ? 'border-red-500' : ''}`}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </div>
+                      {formErrors.email && (
+                        <p className="text-sm text-red-500">{formErrors.email}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          id="signup-password" 
+                          type="password" 
+                          className={`pl-10 ${formErrors.password ? 'border-red-500' : ''}`}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </div>
+                      {formErrors.password && (
+                        <p className="text-sm text-red-500">{formErrors.password}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Password must be at least 6 characters long
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role</Label>
+                      <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="checker">Checker</SelectItem>
+                          <SelectItem value="leader">Leader</SelectItem>
+                          <SelectItem value="owner">Owner</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="terms" 
+                        checked={isAgree}
+                        onCheckedChange={(checked) => setIsAgree(checked as boolean)}
+                      />
+                      <Label 
+                        htmlFor="terms" 
+                        className={`text-sm ${formErrors.terms ? 'text-red-500' : ''}`}
+                      >
+                        I agree to the Terms of Service and Privacy Policy
+                      </Label>
+                    </div>
+                    {formErrors.terms && (
+                      <p className="text-sm text-red-500">{formErrors.terms}</p>
+                    )}
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Creating Account...
+                        </div>
+                      ) : (
+                        <span className="flex items-center">
+                          Create Account <UserPlus className="ml-2 h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+            
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-sm text-center text-muted-foreground">
+                <div className="flex items-center justify-center mb-2">
+                  <CheckCircle className="text-green-500 h-4 w-4 mr-1" />
+                  <span>For testing: admin@example.com / password</span>
+                </div>
+                <p>
+                  Use these roles for testing different dashboards:
+                  admin, owner, leader, checker
                 </p>
               </div>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

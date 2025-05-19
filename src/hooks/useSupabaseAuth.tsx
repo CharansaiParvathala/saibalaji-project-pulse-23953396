@@ -2,9 +2,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { User as SupabaseUser, AuthError } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import { User, UserRole } from "@/types";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthState {
   user: User | null;
@@ -16,103 +16,111 @@ interface AuthState {
   signup: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
 }
 
-// Define a type for the profile data from Supabase
-interface ProfileData {
-  id: string;
-  full_name: string;
-  role: UserRole;
-  created_at?: string;
-}
-
+// Context for authentication state
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [user, setUser] = useState<User | null>(() => {
-    // Check if user data exists in localStorage
-    const savedUser = localStorage.getItem("sai-balaji-user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+
+  // Handle session and user profile data
+  const handleUserData = async (supabaseUser: SupabaseUser | null) => {
+    if (!supabaseUser) {
+      setUser(null);
+      setSupabaseUser(null);
+      localStorage.removeItem("sai-balaji-user");
+      return;
+    }
+    
+    setSupabaseUser(supabaseUser);
+    
+    try {
+      // Fetch profile from profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        // Fallback to metadata if no profile found
+        const userData: User = {
+          id: supabaseUser.id,
+          name: supabaseUser.user_metadata?.full_name || 'User',
+          email: supabaseUser.email || '',
+          role: (supabaseUser.user_metadata?.role as UserRole) || 'checker',
+          createdAt: new Date().toISOString(),
+        };
+        
+        setUser(userData);
+        localStorage.setItem("sai-balaji-user", JSON.stringify(userData));
+        return;
+      }
+      
+      // Create unified user object from profile data
+      const userData: User = {
+        id: supabaseUser.id,
+        name: profile.full_name || supabaseUser.user_metadata?.full_name || 'User',
+        email: supabaseUser.email || '',
+        role: (profile.role as UserRole) || (supabaseUser.user_metadata?.role as UserRole) || 'checker',
+        createdAt: profile.created_at || new Date().toISOString(),
+      };
+      
+      setUser(userData);
+      localStorage.setItem("sai-balaji-user", JSON.stringify(userData));
+      console.log("User profile loaded:", userData);
+    } catch (error) {
+      console.error('Error processing user profile:', error);
+    }
+  };
 
   // Initial session check and setup auth change listener
   useEffect(() => {
-    async function getInitialSession() {
+    async function setupAuth() {
       setIsLoading(true);
       
       try {
-        // Check for existing session
+        // First set up the auth state listener to avoid race conditions
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log("Auth state changed:", event, session?.user?.email);
+            
+            if (event === 'SIGNED_IN' && session?.user) {
+              await handleUserData(session.user);
+            } else if (event === 'SIGNED_OUT') {
+              handleUserData(null);
+            }
+          }
+        );
+        
+        // Then check for existing session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
           console.log("Found existing session", session.user.email);
-          await handleAuthChange(session.user);
+          await handleUserData(session.user);
         } else {
           console.log("No existing session found");
+          handleUserData(null);
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error("Error setting up auth:", error);
       } finally {
         setIsLoading(false);
       }
       
-      // Set up auth state change listener
-      const { data: { subscription } } = await supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          console.log("Auth state change event:", event);
-          if (event === 'SIGNED_IN' && session?.user) {
-            console.log("User signed in:", session.user.email);
-            await handleAuthChange(session.user);
-          } else if (event === 'SIGNED_OUT') {
-            console.log("User signed out");
-            setUser(null);
-            setSupabaseUser(null);
-            localStorage.removeItem("sai-balaji-user");
-          }
-        }
-      );
-      
-      // Cleanup subscription
-      return () => subscription.unsubscribe();
+      return () => {
+        // Cleanup function
+        console.log("Cleaning up auth subscription");
+      };
     }
     
-    getInitialSession();
+    setupAuth();
   }, []);
-  
-  // Handle auth change by fetching user profile
-  async function handleAuthChange(supabaseUser: SupabaseUser) {
-    setSupabaseUser(supabaseUser);
-    
-    try {
-      console.log("Processing user data from metadata");
-      
-      // Use the user metadata instead of querying tables
-      // This is a temporary workaround until proper database tables are created
-      const fakeProfile: ProfileData = {
-        id: supabaseUser.id,
-        full_name: supabaseUser.user_metadata?.full_name || 'User',
-        role: (supabaseUser.user_metadata?.role as UserRole) || 'checker',
-      };
-      
-      // Create unified user object
-      const userData: User = {
-        id: supabaseUser.id,
-        name: fakeProfile.full_name,
-        email: supabaseUser.email || '',
-        role: fakeProfile.role,
-        createdAt: fakeProfile.created_at || new Date().toISOString(),
-      };
-      
-      setUser(userData);
-      
-      // Store user in localStorage for persistence
-      localStorage.setItem("sai-balaji-user", JSON.stringify(userData));
-      console.log("User processed successfully:", userData.email);
-    } catch (error) {
-      console.error('Error handling auth change:', error);
-    }
-  }
   
   async function login(email: string, password: string) {
     setIsLoading(true);
@@ -132,12 +140,17 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           variant: "destructive"
         });
         throw error;
-      } else if (data.user) {
+      }
+      
+      if (data.user) {
         console.log("Login successful for:", data.user.email);
+        await handleUserData(data.user);
+        
         toast({ 
           title: "Login successful", 
           description: `Welcome back, ${data.user.email}!` 
         });
+        
         navigate('/dashboard');
       }
     } catch (error) {
@@ -151,6 +164,8 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   async function logout() {
     try {
       console.log("Attempting logout");
+      setIsLoading(true);
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -161,17 +176,24 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           variant: "destructive" 
         });
         throw error;
-      } else {
-        console.log("Logout successful");
-        toast({ title: "Signed out successfully" });
-        setUser(null);
-        setSupabaseUser(null);
-        localStorage.removeItem("sai-balaji-user");
-        navigate('/login');
       }
+      
+      console.log("Logout successful");
+      toast({ 
+        title: "Signed out successfully" 
+      });
+      
+      // Clear user data
+      setUser(null);
+      setSupabaseUser(null);
+      localStorage.removeItem("sai-balaji-user");
+      
+      navigate('/login');
     } catch (error) {
       console.error("Logout process error:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   }
   
@@ -204,15 +226,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       
       if (data.user) {
         console.log("Signup successful for:", data.user.email);
-        // We'll create the profile using metadata instead
-        // This avoids direct table access until tables are properly set up
+        
         toast({ 
           title: "Signup successful", 
-          description: "Your account has been created successfully! Please verify your email if required." 
+          description: "Your account has been created successfully! You can now log in." 
         });
         
         // Redirect to login instead of auto-login
-        // This gives time for email verification if enabled
         navigate('/login');
       }
     } catch (error) {
