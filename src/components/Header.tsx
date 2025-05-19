@@ -1,13 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { Link } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, Building2 } from "lucide-react";
 
 export function Header() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   
   return (
     <header className="border-b bg-background sticky top-0 z-10">
@@ -16,7 +16,8 @@ export function Header() {
           <button className="mr-4 text-muted-foreground md:hidden">
             <Menu className="h-6 w-6" />
           </button>
-          <Link to="/" className="font-bold text-lg text-primary">
+          <Link to="/" className="font-bold text-lg text-primary flex items-center">
+            <Building2 className="h-5 w-5 mr-2" />
             SAI BALAJI
           </Link>
         </div>

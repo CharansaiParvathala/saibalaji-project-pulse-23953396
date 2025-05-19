@@ -19,10 +19,10 @@ import {
   Key
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
 export function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useSupabaseAuth();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -32,9 +32,13 @@ export function Sidebar() {
     setIsOpen(!isOpen);
   };
   
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
   
   const roleLinks = {
@@ -96,7 +100,8 @@ export function Sidebar() {
       >
         <div className="py-6 px-3 flex flex-col h-full pt-16 md:pt-6">
           <div className="px-4 py-2 mb-2">
-            <p className="font-medium text-sm text-muted-foreground">
+            <p className="font-medium text-primary">{user.name}</p>
+            <p className="text-sm text-muted-foreground">
               {user.role.charAt(0).toUpperCase() + user.role.slice(1)} Dashboard
             </p>
           </div>

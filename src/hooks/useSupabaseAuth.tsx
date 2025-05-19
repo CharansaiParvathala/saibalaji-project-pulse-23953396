@@ -38,9 +38,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // Fetch profile from profiles table
+      // Fetch profile from profiles table - using type assertion to avoid TypeScript errors
+      // since the profiles table might not be in the generated types
       const { data: profile, error } = await supabase
-        .from('profiles')
+        .from('profiles' as any)
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
@@ -62,12 +63,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Create unified user object from profile data
+      // Add null checks for profile
       const userData: User = {
         id: supabaseUser.id,
-        name: profile.full_name || supabaseUser.user_metadata?.full_name || 'User',
+        name: profile?.full_name || supabaseUser.user_metadata?.full_name || 'User',
         email: supabaseUser.email || '',
-        role: (profile.role as UserRole) || (supabaseUser.user_metadata?.role as UserRole) || 'checker',
-        createdAt: profile.created_at || new Date().toISOString(),
+        role: (profile?.role as UserRole) || (supabaseUser.user_metadata?.role as UserRole) || 'checker',
+        createdAt: profile?.created_at || new Date().toISOString(),
       };
       
       setUser(userData);

@@ -42,6 +42,8 @@ import {
   X,
   ChevronRight,
   Building2,
+  MoonStar,
+  Sun,
 } from "lucide-react";
 
 export default function Login() {
@@ -60,7 +62,7 @@ export default function Login() {
   });
   const { login, signup, isAuthenticated, isLoading } = useSupabaseAuth();
   const { toast } = useToast();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   
   useEffect(() => {
     // Reset form errors when switching tabs
@@ -70,6 +72,12 @@ export default function Login() {
       name: "",
       terms: "",
     });
+
+    // Set default test values for development
+    if (activeTab === "login") {
+      setEmail("admin@example.com");
+      setPassword("password");
+    }
   }, [activeTab]);
 
   const validateEmail = (email: string) => {
@@ -127,10 +135,10 @@ export default function Login() {
     }
     
     try {
+      console.log("Attempting login with:", email, password);
       await login(email, password);
-      console.log("Login attempt completed");
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error in component:", error);
     }
   };
   
@@ -142,13 +150,11 @@ export default function Login() {
     }
     
     try {
+      console.log("Attempting signup with:", email, password, name, role);
       await signup(email, password, name, role);
       setActiveTab("login");
-      setEmail("");
-      setPassword("");
-      console.log("Signup attempt completed");
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error("Signup error in component:", error);
     }
   };
 
@@ -158,7 +164,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-950 dark:via-purple-950 dark:to-pink-950">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 dark:from-violet-900 dark:via-purple-900 dark:to-fuchsia-900 transition-colors duration-300">
       {/* Header with Theme Toggle */}
       <header className="w-full p-4 flex justify-between items-center z-10">
         <div className="flex items-center">
@@ -167,7 +173,12 @@ export default function Login() {
         </div>
         
         <div className="flex items-center gap-4">
-          <ThemeToggle />
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+            className="p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors"
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <MoonStar className="h-5 w-5" />}
+          </button>
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)} 
             className="md:hidden text-white p-2 rounded-full hover:bg-white/10"
@@ -179,7 +190,7 @@ export default function Login() {
       
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-16 right-4 w-48 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-20">
+        <div className="md:hidden fixed top-16 right-4 w-48 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-20 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90">
           <a href="#" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
             About Us <ChevronRight className="ml-auto h-4 w-4" />
           </a>
@@ -196,23 +207,23 @@ export default function Login() {
         {/* Left side - Company Info (hidden on mobile) */}
         <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center p-8 text-white">
           <div className="max-w-md text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-shadow-lg">
               Building Excellence, Delivering Trust
             </h1>
-            <p className="text-xl mb-8">
+            <p className="text-xl mb-8 text-white/90">
               Sai Balaji Construction provides top-tier construction services with precision and reliability.
             </p>
             
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl">
+              <div className="bg-white/20 backdrop-blur-md p-4 rounded-xl shadow-glow">
                 <p className="text-2xl font-bold">15+</p>
                 <p className="text-sm">Years Experience</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl">
+              <div className="bg-white/20 backdrop-blur-md p-4 rounded-xl shadow-glow">
                 <p className="text-2xl font-bold">200+</p>
                 <p className="text-sm">Projects Completed</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl">
+              <div className="bg-white/20 backdrop-blur-md p-4 rounded-xl shadow-glow">
                 <p className="text-2xl font-bold">500+</p>
                 <p className="text-sm">Workers Employed</p>
               </div>
@@ -222,7 +233,7 @@ export default function Login() {
         
         {/* Right side - Login/Signup Form */}
         <div className="w-full md:w-1/2 flex justify-center items-center">
-          <Card className="w-full max-w-md border-0 shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg">
+          <Card className="w-full max-w-md border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
                 {activeTab === "login" ? "Welcome Back" : "Create an Account"}
@@ -295,7 +306,7 @@ export default function Login() {
                     
                     <Button 
                       type="submit" 
-                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -363,6 +374,7 @@ export default function Login() {
                           className={`pl-10 ${formErrors.password ? 'border-red-500' : ''}`}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Minimum 6 characters"
                         />
                       </div>
                       {formErrors.password && (
@@ -407,7 +419,7 @@ export default function Login() {
                     
                     <Button 
                       type="submit" 
-                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                       disabled={isLoading}
                     >
                       {isLoading ? (
