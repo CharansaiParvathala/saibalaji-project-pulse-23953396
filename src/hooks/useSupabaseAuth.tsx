@@ -1,9 +1,18 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+
+// Define a type for the profile data to make it clearer
+interface ProfileData {
+  id: string;
+  full_name?: string;
+  role?: string;
+  created_at?: string;
+}
 
 interface AuthState {
   user: User | null;
@@ -37,13 +46,12 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // Use as unknown type to bypass TypeScript strictness for now
-      // This is a workaround until proper types are available for your tables
+      // Use a type assertion to help TypeScript understand what we're doing
       const { data: profile, error } = await supabase
-        .from('profiles' as unknown as never)
+        .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
-        .single();
+        .single() as { data: ProfileData | null, error: Error | null };
         
       if (error) {
         console.error("Error fetching user profile:", error);
