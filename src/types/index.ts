@@ -66,7 +66,7 @@ export interface PaymentStatusHistoryEntry {
 export interface Notification {
   id: string;
   userId: string;
-  type: "payment_status" | "progress_update" | "general";
+  type: "payment_status" | "progress_update" | "general" | "storage_alert";
   title: string;
   message: string;
   relatedId?: string;
@@ -139,4 +139,9 @@ export interface PaymentRequest {
   statusHistory?: PaymentStatusHistoryEntry[];
   scheduledDate?: string;
   paidDate?: string;
+  vehicleUsed?: boolean;
+  meterReadings?: {
+    start?: MeterReading;
+    end?: MeterReading;
+  };
 }

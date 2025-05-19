@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,10 +26,11 @@ import Submissions from "@/pages/submissions";
 import ReviewSubmission from "@/pages/submissions/[id]";
 import ReviewHistory from "@/pages/history";
 import Credentials from "@/pages/users/credentials";
+import BackupPage from "@/pages/backup";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="sai-balaji-theme">
       <Routes>
         {/* Make sure the index route is the first one */}
         <Route path="/" element={<Index />} />
@@ -74,6 +74,9 @@ function App() {
         {/* Submissions */}
         <Route path="/submissions" element={<Submissions />} />
         <Route path="/submissions/:id" element={<ReviewSubmission />} />
+        
+        {/* Backup & Data Management */}
+        <Route path="/backup" element={<BackupPage />} />
         
         {/* 404 - Always keep this as the last route */}
         <Route path="*" element={<NotFound />} />

@@ -1,136 +1,177 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Import VT323 font - classic terminal/retro look */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 @layer base {
   :root {
-    --background: 37 33% 95%;
-    --foreground: 34 30% 20%;
+    --background: 0 0% 75.3%; /* Classic gray background - #c0c0c0 */
+    --foreground: 0 0% 0%;    /* Black text */
 
-    --card: 40 38% 95%;
-    --card-foreground: 34 30% 20%;
+    --card: 0 0% 94.1%;       /* Light gray card - #f0f0f0 */
+    --card-foreground: 0 0% 0%;
 
-    --popover: 40 38% 95%;
-    --popover-foreground: 34 30% 20%;
-
-    --primary: 187 40% 60%;
+    --popover: 0 0% 94.1%;
+    --popover-foreground: 0 0% 0%;
+    
+    --primary: 240 100% 33.3%;  /* Classic blue - #0000aa */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 34 30% 82%;
-    --secondary-foreground: 34 35% 25%;
+    --secondary: 0 100% 33.3%;  /* Classic red - #aa0000 */
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 0 0% 82.7%;       /* Light gray - #d3d3d3 */
+    --muted-foreground: 0 0% 25.1%;
 
-    --muted: 34 20% 92%;
-    --muted-foreground: 34 15% 40%;
+    --accent: 120 100% 33.3%;  /* Classic green - #00aa00 */
+    --accent-foreground: 0 0% 100%;
 
-    --accent: 34 40% 75%;
-    --accent-foreground: 34 50% 25%;
+    --destructive: 0 100% 40%;  /* Bright red - #cc0000 */
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 50.2%;       /* Gray border - #808080 */
+    --input: 0 0% 50.2%;
+    --ring: 0 0% 50.2%;
 
-    --border: 34 20% 82%;
-    --input: 34 20% 82%;
-    --ring: 34 30% 60%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 34 30% 95%;
-    --sidebar-foreground: 34 30% 20%;
-    --sidebar-primary: 187 40% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 34 40% 75%;
-    --sidebar-accent-foreground: 34 50% 25%;
-    --sidebar-border: 34 20% 82%;
-    --sidebar-ring: 187 40% 60%;
+    --radius: 0px;             /* Sharp corners for 90s look */
   }
-
+ 
   .dark {
-    --background: 222 47% 10%;
-    --foreground: 210 40% 98%;
+    --background: 240 100% 25%;   /* Classic terminal blue - #000080 */
+    --foreground: 0 0% 100%;      /* White text */
 
-    --card: 222 47% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 12.5%;          /* Dark gray card - #202020 */
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222 47% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 12.5%;
+    --popover-foreground: 0 0% 100%;
+    
+    --primary: 120 100% 50%;      /* Terminal green - #00ff00 */
+    --primary-foreground: 0 0% 0%;
 
-    --primary: 209 100% 59%;
-    --primary-foreground: 0 0% 100%;
+    --secondary: 300 100% 50%;    /* Terminal magenta - #ff00ff */
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 0 0% 25.1%;         /* Dark gray - #404040 */
+    --muted-foreground: 0 0% 75.3%;
 
-    --secondary: 217 33% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --accent: 60 100% 50%;        /* Terminal yellow - #ffff00 */
+    --accent-foreground: 0 0% 0%;
 
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 75%;
+    --destructive: 0 100% 50%;     /* Bright red - #ff0000 */
+    --destructive-foreground: 0 0% 100%;
 
-    --accent: 217 33% 25%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 212.7 26.8% 83.9%;
-
-    --sidebar-background: 222 47% 12%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 209 100% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 25%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 209 100% 59%;
+    --border: 0 0% 37.6%;         /* Gray border - #606060 */
+    --input: 0 0% 37.6%;
+    --ring: 0 0% 37.6%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground font-mono;
   }
-
-  h1 {
-    @apply text-4xl font-bold tracking-tight mb-4;
-  }
-
-  h2 {
-    @apply text-3xl font-semibold tracking-tight mb-3;
-  }
-
-  h3 {
-    @apply text-2xl font-semibold tracking-tight mb-2;
-  }
-
-  h4 {
-    @apply text-xl font-medium mb-2;
-  }
-
-  .card {
-    @apply rounded-xl border bg-card text-card-foreground shadow-soft;
-  }
-
-  .form-group {
-    @apply space-y-2 mb-4;
-  }
-
-  .form-label {
-    @apply block text-sm font-medium;
-  }
-
-  .form-input {
-    @apply flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono;
   }
 }
 
+/* 90s Style Overrides */
 @layer components {
-  .panel {
-    @apply bg-card rounded-xl shadow-soft p-6;
+  .btn-90s {
+    @apply border-2 border-solid font-mono shadow-90s active:shadow-inset-90s transition-none;
   }
+  
+  .card-90s {
+    @apply border-2 border-solid shadow-90s;
+  }
+
+  .input-90s {
+    @apply border-2 border-inset bg-white;
+  }
+
+  /* Custom inset style for form elements */
+  .border-inset {
+    border-style: inset;
+  }
+  
+  /* Custom outset style for buttons and cards */
+  .border-outset {
+    border-style: outset;
+  }
+  
+  /* Pixel-like image rendering */
+  .img-pixelated {
+    image-rendering: pixelated;
+  }
+}
+
+/* Classic scrollbar design */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #c0c0c0;
+  border-left: 1px solid #808080;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d3d3d3;
+  border: 1px outset #808080;
+  border-right: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+/* Styles for progress bars and other elements to look more 90s-like */
+.progress-90s {
+  border: 2px inset #808080;
+  background: white;
+}
+
+.progress-90s::-webkit-progress-value {
+  background: #0000aa;
+}
+
+/* Classic table styles */
+.table-90s {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-90s th {
+  background-color: #d3d3d3;
+  border: 1px solid #808080;
+  font-weight: bold;
+}
+
+.table-90s td {
+  border: 1px solid #808080;
+  background-color: white;
+}
+
+/* Menu bar styling */
+.menubar-90s {
+  background-color: #d3d3d3;
+  border-bottom: 1px solid #808080;
+}
+
+.menubar-90s-item {
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.menubar-90s-item:hover {
+  background-color: #0000aa;
+  color: white;
 }
