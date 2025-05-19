@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,10 +37,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // Fetch profile from profiles table - using type assertion to avoid TypeScript errors
-      // since the profiles table might not be in the generated types
+      // Use as unknown type to bypass TypeScript strictness for now
+      // This is a workaround until proper types are available for your tables
       const { data: profile, error } = await supabase
-        .from('profiles' as any)
+        .from('profiles' as unknown as never)
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
@@ -62,8 +61,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       
-      // Create unified user object from profile data
-      // Add null checks for profile
+      // Create unified user object from profile data with null checks
       const userData: User = {
         id: supabaseUser.id,
         name: profile?.full_name || supabaseUser.user_metadata?.full_name || 'User',

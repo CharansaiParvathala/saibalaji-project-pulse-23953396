@@ -1,5 +1,4 @@
 import { Route, Routes } from "react-router-dom";
-import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { SupabaseAuthProvider } from "@/hooks/useSupabaseAuth";
@@ -32,63 +31,61 @@ import BackupPage from "@/pages/backup";
 
 function App() {
   return (
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="sai-balaji-theme">
-        <SupabaseAuthProvider>
-          <Routes>
-            {/* Make sure the index route is the first one */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            
-            {/* Projects */}
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/create" element={<CreateProject />} />
-            <Route path="/projects/:id" element={<ProjectDetails />} />
-            
-            {/* Progress */}
-            <Route path="/progress" element={<Projects showProgressButton={true} />} />
-            <Route path="/progress/add/:projectId" element={<AddProgress />} />
-            <Route path="/progress/view/:id" element={<ViewProgress />} />
-            
-            {/* Payments */}
-            <Route path="/payments/request" element={<RequestPayment />} />
-            <Route path="/payments/approve" element={<ApprovePayments />} />
-            <Route path="/payments/history" element={<PaymentHistory />} />
-            
-            {/* Statistics */}
-            <Route path="/statistics" element={<Statistics />} />
-            
-            {/* Users */}
-            <Route path="/users" element={<UsersList />} />
-            <Route path="/users/add" element={<AddUser />} />
-            <Route path="/users/edit/:id" element={<EditUser />} />
-            <Route path="/users/credentials" element={<Credentials />} />
-            
-            {/* Checker history */}
-            <Route path="/history" element={<ReviewHistory />} />
-            
-            {/* Vehicles */}
-            <Route path="/vehicles" element={<VehiclesList />} />
-            <Route path="/vehicles/add" element={<AddVehicle />} />
-            <Route path="/vehicles/:id" element={<VehicleDetails />} />
-            <Route path="/vehicles/edit/:id" element={<EditVehicle />} />
-            
-            {/* Submissions */}
-            <Route path="/submissions" element={<Submissions />} />
-            <Route path="/submissions/:id" element={<ReviewSubmission />} />
-            
-            {/* Backup & Data Management */}
-            <Route path="/backup" element={<BackupPage />} />
-            
-            {/* 404 - Always keep this as the last route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </SupabaseAuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="light" storageKey="sai-balaji-theme">
+      <SupabaseAuthProvider>
+        <Routes>
+          {/* Make sure the index route is the first one */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          
+          {/* Projects */}
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/create" element={<CreateProject />} />
+          <Route path="/projects/:id" element={<ProjectDetails />} />
+          
+          {/* Progress */}
+          <Route path="/progress" element={<Projects showProgressButton={true} />} />
+          <Route path="/progress/add/:projectId" element={<AddProgress />} />
+          <Route path="/progress/view/:id" element={<ViewProgress />} />
+          
+          {/* Payments */}
+          <Route path="/payments/request" element={<RequestPayment />} />
+          <Route path="/payments/approve" element={<ApprovePayments />} />
+          <Route path="/payments/history" element={<PaymentHistory />} />
+          
+          {/* Statistics */}
+          <Route path="/statistics" element={<Statistics />} />
+          
+          {/* Users */}
+          <Route path="/users" element={<UsersList />} />
+          <Route path="/users/add" element={<AddUser />} />
+          <Route path="/users/edit/:id" element={<EditUser />} />
+          <Route path="/users/credentials" element={<Credentials />} />
+          
+          {/* Checker history */}
+          <Route path="/history" element={<ReviewHistory />} />
+          
+          {/* Vehicles */}
+          <Route path="/vehicles" element={<VehiclesList />} />
+          <Route path="/vehicles/add" element={<AddVehicle />} />
+          <Route path="/vehicles/:id" element={<VehicleDetails />} />
+          <Route path="/vehicles/edit/:id" element={<EditVehicle />} />
+          
+          {/* Submissions */}
+          <Route path="/submissions" element={<Submissions />} />
+          <Route path="/submissions/:id" element={<ReviewSubmission />} />
+          
+          {/* Backup & Data Management */}
+          <Route path="/backup" element={<BackupPage />} />
+          
+          {/* 404 - Always keep this as the last route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </SupabaseAuthProvider>
+    </ThemeProvider>
   );
 }
 
