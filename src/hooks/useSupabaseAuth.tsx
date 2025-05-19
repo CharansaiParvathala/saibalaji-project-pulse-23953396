@@ -46,12 +46,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // Use a type assertion to help TypeScript understand what we're doing
-      const { data: profile, error } = await supabase
-        .from('profiles')
+      // We need to type cast to any to bypass the TypeScript checking
+      // since the generated types don't include our tables yet
+      const { data: profile, error } = await (supabase
+        .from('profiles') as any)
         .select('*')
         .eq('id', supabaseUser.id)
-        .single() as { data: ProfileData | null, error: Error | null };
+        .single();
         
       if (error) {
         console.error("Error fetching user profile:", error);

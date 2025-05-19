@@ -11,7 +11,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <SupabaseAuthProvider>
+          <App />
+        </SupabaseAuthProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
