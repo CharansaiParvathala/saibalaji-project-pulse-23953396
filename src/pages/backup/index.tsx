@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Download, Upload, FileArchive, Trash2, AlertTriangle, Link } from "lucide-react";
 import { generateDataReport, downloadReport } from "@/lib/documentGenerator";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast"; // Updated import
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
@@ -52,7 +52,7 @@ export default function BackupPage() {
     max: MOCK_STORAGE.maxBytes
   });
   
-  const { toast: toastFn } = toast;
+  const { toast } = useToast(); // Fixed toast usage
   const { user } = useSupabaseAuth();
   
   // Generate and download report
