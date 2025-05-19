@@ -46,13 +46,16 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // We need to type cast to any to bypass the TypeScript checking
-      // since the generated types don't include our tables yet
-      const { data: profile, error } = await (supabase
-        .from('profiles') as any)
+      // We need to use a more explicit type assertion that bypasses TypeScript's type checking
+      // for the Supabase client since our database schema is not properly reflected in the types
+      const response = await supabase
+        .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
+        
+      const profile = response.data as ProfileData | null;
+      const error = response.error;
         
       if (error) {
         console.error("Error fetching user profile:", error);
