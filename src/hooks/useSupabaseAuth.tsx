@@ -46,9 +46,9 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // We need to use a more explicit type assertion that bypasses TypeScript's type checking
+      // Use a complete type assertion to bypass TypeScript's type checking
       // for the Supabase client since our database schema is not properly reflected in the types
-      const response = await supabase
+      const response = await (supabase as any)
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
