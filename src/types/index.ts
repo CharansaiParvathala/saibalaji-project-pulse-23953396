@@ -108,7 +108,7 @@ export interface ProgressEntry {
   paymentRequests?: string[];
   submittedBy?: string;
   submittedAt?: string;
-  status?: "draft" | "submitted" | "approved" | "correction-requested" | "locked";
+  status?: "draft" | "submitted" | "approved" | "correction-requested" | "locked" | "rejected";
   isLocked?: boolean;
   correctionRequest?: {
     message: string;
@@ -117,6 +117,9 @@ export interface ProgressEntry {
   };
   createdBy?: string; // ID of the user who created this entry
   userName?: string; // Name of the user who created this entry
+  projectName?: string; // Name of the project this entry belongs to
+  reviewedBy?: string; // ID of the user who reviewed this entry
+  reviewedAt?: string; // Timestamp when the entry was reviewed
 }
 
 export interface PaymentRequest {
@@ -137,4 +140,3 @@ export interface PaymentRequest {
   scheduledDate?: string;
   paidDate?: string;
 }
-

@@ -66,8 +66,8 @@ export default function ReviewHistory() {
               <TableCell>{entry.projectName || "Unknown Project"}</TableCell>
               <TableCell>{entry.userName || "Unknown User"}</TableCell>
               <TableCell>
-                <Badge variant={entry.status === "approved" ? "success" : "destructive"}>
-                  {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                <Badge variant={entry.status === "approved" ? "default" : "destructive"}>
+                  {entry.status?.charAt(0).toUpperCase() + entry.status?.slice(1) || "Unknown"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
