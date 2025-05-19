@@ -30,30 +30,45 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Check if user data exists in localStorage
+    const savedUser = localStorage.getItem("sai-balaji-user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   // Initial session check and setup auth change listener
   useEffect(() => {
     async function getInitialSession() {
       setIsLoading(true);
       
-      // Check for existing session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        await handleAuthChange(session.user);
+      try {
+        // Check for existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          console.log("Found existing session", session.user.email);
+          await handleAuthChange(session.user);
+        } else {
+          console.log("No existing session found");
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
       
       // Set up auth state change listener
       const { data: { subscription } } = await supabase.auth.onAuthStateChange(
         async (event, session) => {
+          console.log("Auth state change event:", event);
           if (event === 'SIGNED_IN' && session?.user) {
+            console.log("User signed in:", session.user.email);
             await handleAuthChange(session.user);
           } else if (event === 'SIGNED_OUT') {
+            console.log("User signed out");
             setUser(null);
             setSupabaseUser(null);
+            localStorage.removeItem("sai-balaji-user");
           }
         }
       );
@@ -70,7 +85,9 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setSupabaseUser(supabaseUser);
     
     try {
-      // Use the storage/local API instead of direct Supabase query
+      console.log("Processing user data from metadata");
+      
+      // Use the user metadata instead of querying tables
       // This is a temporary workaround until proper database tables are created
       const fakeProfile: ProfileData = {
         id: supabaseUser.id,
@@ -79,13 +96,19 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       };
       
       // Create unified user object
-      setUser({
+      const userData: User = {
         id: supabaseUser.id,
         name: fakeProfile.full_name,
         email: supabaseUser.email || '',
         role: fakeProfile.role,
         createdAt: fakeProfile.created_at || new Date().toISOString(),
-      });
+      };
+      
+      setUser(userData);
+      
+      // Store user in localStorage for persistence
+      localStorage.setItem("sai-balaji-user", JSON.stringify(userData));
+      console.log("User processed successfully:", userData.email);
     } catch (error) {
       console.error('Error handling auth change:', error);
     }
@@ -93,83 +116,111 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   
   async function login(email: string, password: string) {
     setIsLoading(true);
+    console.log("Attempting login for:", email);
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (error) {
-      toast({ 
-        title: "Login failed", 
-        description: error.message,
-        variant: "destructive"
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
-    } else if (data.user) {
-      toast({ 
-        title: "Login successful", 
-        description: `Welcome back, ${data.user.email}!` 
-      });
-      navigate('/dashboard');
+      
+      if (error) {
+        console.error("Login error:", error);
+        toast({ 
+          title: "Login failed", 
+          description: error.message,
+          variant: "destructive"
+        });
+        throw error;
+      } else if (data.user) {
+        console.log("Login successful for:", data.user.email);
+        toast({ 
+          title: "Login successful", 
+          description: `Welcome back, ${data.user.email}!` 
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error("Login process error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }
   
   async function logout() {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
-      toast({ 
-        title: "Sign out failed", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    } else {
-      toast({ title: "Signed out successfully" });
-      setUser(null);
-      setSupabaseUser(null);
-      navigate('/login');
+    try {
+      console.log("Attempting logout");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast({ 
+          title: "Sign out failed", 
+          description: error.message,
+          variant: "destructive" 
+        });
+        throw error;
+      } else {
+        console.log("Logout successful");
+        toast({ title: "Signed out successfully" });
+        setUser(null);
+        setSupabaseUser(null);
+        localStorage.removeItem("sai-balaji-user");
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error("Logout process error:", error);
+      throw error;
     }
   }
   
   async function signup(email: string, password: string, name: string, role: UserRole) {
     setIsLoading(true);
+    console.log("Attempting signup for:", email, "with role:", role);
     
-    // Register the user with metadata
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          role: role
+    try {
+      // Register the user with metadata
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: role
+          }
         }
-      }
-    });
-    
-    if (error) {
-      toast({ 
-        title: "Signup failed", 
-        description: error.message,
-        variant: "destructive" 
-      });
-      setIsLoading(false);
-      return;
-    }
-    
-    if (data.user) {
-      // We'll create the profile using metadata instead
-      // This avoids direct table access until tables are properly set up
-      toast({ 
-        title: "Signup successful", 
-        description: "Your account has been created successfully!" 
       });
       
-      navigate('/login');
+      if (error) {
+        console.error("Signup error:", error);
+        toast({ 
+          title: "Signup failed", 
+          description: error.message,
+          variant: "destructive" 
+        });
+        throw error;
+      }
+      
+      if (data.user) {
+        console.log("Signup successful for:", data.user.email);
+        // We'll create the profile using metadata instead
+        // This avoids direct table access until tables are properly set up
+        toast({ 
+          title: "Signup successful", 
+          description: "Your account has been created successfully! Please verify your email if required." 
+        });
+        
+        // Redirect to login instead of auto-login
+        // This gives time for email verification if enabled
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error("Signup process error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }
   
   return (
