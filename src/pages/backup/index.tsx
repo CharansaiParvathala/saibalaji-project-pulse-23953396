@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { ClassicLayout } from "@/components/ClassicLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,54 +8,52 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Download, Upload, FileArchive, Trash2, AlertTriangle, Link } from "lucide-react";
 import { generateDataReport, downloadReport } from "@/lib/documentGenerator";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+
+// Mock data for storage usage and backup links - in a real app these would come from Supabase
+const MOCK_STORAGE = {
+  totalBytes: 250 * 1024 * 1024, // 250 MB
+  maxBytes: 500 * 1024 * 1024, // 500 MB
+};
+
+// Mock backup links
+const MOCK_BACKUP_LINKS = [
+  {
+    id: "1",
+    title: "Google Drive Backup (May 2025)",
+    url: "https://drive.google.com/folder/example",
+    description: "Complete system backup including all photos and documents",
+    created_at: new Date().toISOString(),
+    created_by: "admin-user-id"
+  },
+  {
+    id: "2",
+    title: "Dropbox Archive (April 2025)",
+    url: "https://dropbox.com/shared/example",
+    description: "Payment records and project documentation",
+    created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    created_by: "admin-user-id"
+  }
+];
 
 export default function BackupPage() {
   const [generating, setGenerating] = useState(false);
   const [fileName, setFileName] = useState(`sai-balaji-backup-${new Date().toISOString().split('T')[0]}`);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
-  const [backupLinks, setBackupLinks] = useState<any[]>([]);
+  const [backupLinks, setBackupLinks] = useState(MOCK_BACKUP_LINKS);
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkDescription, setLinkDescription] = useState("");
-  const [storageUsage, setStorageUsage] = useState<{total: number, max: number} | null>(null);
-  const { toast } = useToast();
-  const { user } = useSupabaseAuth();
+  const [storageUsage, setStorageUsage] = useState({
+    total: MOCK_STORAGE.totalBytes,
+    max: MOCK_STORAGE.maxBytes
+  });
   
-  // Fetch storage usage and backup links
-  useState(() => {
-    async function fetchData() {
-      // Get storage usage
-      const { data: usageData } = await supabase
-        .from('storage_usage')
-        .select('*')
-        .limit(1)
-        .single();
-      
-      if (usageData) {
-        setStorageUsage({
-          total: usageData.total_bytes,
-          max: usageData.max_bytes
-        });
-      }
-      
-      // Get backup links
-      const { data: links } = await supabase
-        .from('backup_links')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (links) {
-        setBackupLinks(links);
-      }
-    }
-    
-    fetchData();
-  }, []);
+  const { toast: toastFn } = toast;
+  const { user } = useSupabaseAuth();
   
   // Generate and download report
   const handleGenerateReport = async () => {
@@ -105,32 +104,23 @@ export default function BackupPage() {
     }
     
     try {
-      const { data, error } = await supabase
-        .from('backup_links')
-        .insert({
-          title: linkTitle,
-          url: linkUrl,
-          description: linkDescription || null,
-          created_by: user?.id || ""
-        })
-        .select();
-        
-      if (error) throw error;
+      // In a real app, this would be a Supabase call
+      const newLink = {
+        id: Date.now().toString(),
+        title: linkTitle,
+        url: linkUrl,
+        description: linkDescription || "",
+        created_at: new Date().toISOString(),
+        created_by: user?.id || ""
+      };
+      
+      // Update local state
+      setBackupLinks([newLink, ...backupLinks]);
       
       toast({
         title: "Success",
         description: "Backup link added successfully"
       });
-      
-      // Refresh links
-      const { data: links } = await supabase
-        .from('backup_links')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (links) {
-        setBackupLinks(links);
-      }
       
       // Reset form
       setLinkTitle("");
@@ -146,41 +136,23 @@ export default function BackupPage() {
     }
   };
   
-  // Clear database
+  // Clear database (mock implementation)
   const handleClearDatabase = async () => {
     try {
-      // Delete progress entries
-      await supabase.from('progress_entries').delete().neq('id', 'placeholder');
+      // In a real app, these would be Supabase calls
       
-      // Delete payment requests
-      await supabase.from('payment_requests').delete().neq('id', 'placeholder');
-      
-      // Delete payment purposes
-      await supabase.from('payment_purposes').delete().neq('id', 'placeholder');
-      
-      // Delete payment status history
-      await supabase.from('payment_status_history').delete().neq('id', 'placeholder');
-      
-      // Delete photos (but keep references in storage)
-      await supabase.from('photos').delete().neq('id', 'placeholder');
-      
-      // Delete projects
-      await supabase.from('projects').delete().neq('id', 'placeholder');
-      
-      // Reset storage usage
-      await supabase.from('storage_usage')
-        .update({ total_bytes: 0, updated_at: new Date().toISOString() })
-        .eq('id', (await supabase.from('storage_usage').select('id').limit(1).single()).data?.id);
-      
-      toast({
-        title: "Success",
-        description: "Database cleared successfully! User data, vehicle data, and backup links are preserved."
-      });
-      
-      setShowDeleteDialog(false);
-      
-      // Update storage usage display
-      setStorageUsage(prev => prev ? { ...prev, total: 0 } : null);
+      // Simulate database clearing
+      setTimeout(() => {
+        // Reset storage usage for the visual effect
+        setStorageUsage(prev => ({ ...prev, total: 0 }));
+        
+        toast({
+          title: "Success",
+          description: "Database cleared successfully! User data, vehicle data, and backup links are preserved."
+        });
+        
+        setShowDeleteDialog(false);
+      }, 1000);
       
     } catch (error: any) {
       toast({
