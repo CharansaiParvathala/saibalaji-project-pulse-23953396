@@ -4,6 +4,7 @@ import {
   Project, ProgressEntry, PaymentRequest, 
   Photo, Vehicle, Driver 
 } from "@/types";
+import { getProjects, getProgressEntries, getPaymentRequests, getVehicles, getDrivers } from "@/lib/storage";
 
 // Helper function to format date
 function formatDate(dateString: string): string {
@@ -17,14 +18,15 @@ function formatDate(dateString: string): string {
 // Function to generate a complete data report in DOCX format
 export async function generateDataReport(fileName: string): Promise<Blob | null> {
   try {
-    // Fetch all data from Supabase
-    const { data: projects } = await supabase.from('projects').select('*');
-    const { data: progress } = await supabase.from('progress_entries').select('*');
-    const { data: payments } = await supabase.from('payment_requests').select('*');
-    const { data: users } = await supabase.from('profiles').select('*');
-    const { data: vehicles } = await supabase.from('vehicles').select('*');
-    const { data: drivers } = await supabase.from('drivers').select('*');
-    const { data: photos } = await supabase.from('photos').select('*');
+    // Use local storage instead of Supabase queries
+    // This avoids type errors until the database tables are properly set up
+    const projects = getProjects();
+    const progress = getProgressEntries();
+    const payments = getPaymentRequests();
+    const users = []; // We'll handle users differently for now
+    const vehicles = getVehicles();
+    const drivers = getDrivers();
+    const photos = []; // photos will be handled differently
     
     // Create document content
     const documentContent = `
@@ -64,9 +66,9 @@ export async function generateDataReport(fileName: string): Promise<Blob | null>
               <tr>
                 <td>${p.id}</td>
                 <td>${p.name}</td>
-                <td>${p.num_workers}</td>
+                <td>${p.numWorkers}</td>
                 <td>${p.status}</td>
-                <td>${formatDate(p.created_at)}</td>
+                <td>${formatDate(p.createdAt)}</td>
               </tr>
             `).join('') || 'No projects found.'}
           </table>
@@ -85,10 +87,10 @@ export async function generateDataReport(fileName: string): Promise<Blob | null>
             ${progress?.map(p => `
               <tr>
                 <td>${formatDate(p.date)}</td>
-                <td>${(projects?.find(proj => proj.id === p.project_id)?.name) || 'Unknown'}</td>
-                <td>${p.distance_completed || 0} meters</td>
-                <td>${p.workers_present || 0}</td>
-                <td>${p.status}</td>
+                <td>${(projects?.find(proj => proj.id === p.projectId)?.name) || 'Unknown'}</td>
+                <td>${p.distanceCompleted || 0} meters</td>
+                <td>${p.workersPresent || 0}</td>
+                <td>${p.status || 'Unknown'}</td>
               </tr>
             `).join('') || 'No progress entries found.'}
           </table>
@@ -106,11 +108,11 @@ export async function generateDataReport(fileName: string): Promise<Blob | null>
             </tr>
             ${payments?.map(p => `
               <tr>
-                <td>${(projects?.find(proj => proj.id === p.project_id)?.name) || 'Unknown'}</td>
+                <td>${(projects?.find(proj => proj.id === p.projectId)?.name) || 'Unknown'}</td>
                 <td>₹${p.amount}</td>
                 <td>${p.status}</td>
-                <td>${formatDate(p.requested_at)}</td>
-                <td>${p.paid_date ? formatDate(p.paid_date) : 'Not paid'}</td>
+                <td>${formatDate(p.requestedAt)}</td>
+                <td>${p.paidDate ? formatDate(p.paidDate) : 'Not paid'}</td>
               </tr>
             `).join('') || 'No payment requests found.'}
           </table>
@@ -127,7 +129,7 @@ export async function generateDataReport(fileName: string): Promise<Blob | null>
             ${vehicles?.map(v => `
               <tr>
                 <td>${v.model}</td>
-                <td>${v.registration_number}</td>
+                <td>${v.registrationNumber}</td>
                 <td>${v.type}</td>
               </tr>
             `).join('') || 'No vehicles found.'}
@@ -145,7 +147,7 @@ export async function generateDataReport(fileName: string): Promise<Blob | null>
             ${drivers?.map(d => `
               <tr>
                 <td>${d.name}</td>
-                <td>${d.license_number}</td>
+                <td>${d.licenseNumber}</td>
                 <td>${d.type}</td>
               </tr>
             `).join('') || 'No drivers found.'}

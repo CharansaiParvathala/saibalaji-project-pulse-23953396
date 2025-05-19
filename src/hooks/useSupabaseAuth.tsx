@@ -16,6 +16,14 @@ interface AuthState {
   signup: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
 }
 
+// Define a type for the profile data from Supabase
+interface ProfileData {
+  id: string;
+  full_name: string;
+  role: UserRole;
+  created_at?: string;
+}
+
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
@@ -61,26 +69,26 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   async function handleAuthChange(supabaseUser: SupabaseUser) {
     setSupabaseUser(supabaseUser);
     
-    // Fetch user profile from profiles table
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', supabaseUser.id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      return;
+    try {
+      // Use the storage/local API instead of direct Supabase query
+      // This is a temporary workaround until proper database tables are created
+      const fakeProfile: ProfileData = {
+        id: supabaseUser.id,
+        full_name: supabaseUser.user_metadata?.full_name || 'User',
+        role: (supabaseUser.user_metadata?.role as UserRole) || 'checker',
+      };
+      
+      // Create unified user object
+      setUser({
+        id: supabaseUser.id,
+        name: fakeProfile.full_name,
+        email: supabaseUser.email || '',
+        role: fakeProfile.role,
+        createdAt: fakeProfile.created_at || new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error handling auth change:', error);
     }
-    
-    // Create unified user object
-    setUser({
-      id: supabaseUser.id,
-      name: profile.full_name,
-      email: supabaseUser.email || '',
-      role: profile.role,
-      createdAt: profile.created_at,
-    });
   }
   
   async function login(email: string, password: string) {
@@ -128,13 +136,14 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   async function signup(email: string, password: string, name: string, role: UserRole) {
     setIsLoading(true);
     
-    // Register the user
+    // Register the user with metadata
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: name
+          full_name: name,
+          role: role
         }
       }
     });
@@ -150,27 +159,14 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
     
     if (data.user) {
-      // Create a profile for the user
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        full_name: name,
-        role: role
+      // We'll create the profile using metadata instead
+      // This avoids direct table access until tables are properly set up
+      toast({ 
+        title: "Signup successful", 
+        description: "Your account has been created successfully!" 
       });
       
-      if (profileError) {
-        toast({ 
-          title: "Profile creation failed", 
-          description: profileError.message,
-          variant: "destructive" 
-        });
-      } else {
-        toast({ 
-          title: "Signup successful", 
-          description: "Your account has been created successfully!" 
-        });
-        
-        navigate('/login');
-      }
+      navigate('/login');
     }
     
     setIsLoading(false);
