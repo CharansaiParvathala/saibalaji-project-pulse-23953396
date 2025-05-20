@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ function LeaderDashboard() {
   const [projects, setProjects] = useState([]);
   const [pendingPayments, setPendingPayments] = useState(0);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [lastProgressDate, setLastProgressDate] = useState<string | null>(null);
 
   useEffect(() => {
@@ -509,7 +509,7 @@ function AdminDashboard() {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
 
   if (!user) {
     return null;
