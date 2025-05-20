@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +17,7 @@ interface ProfileData {
 interface AuthState {
   user: User | null;
   supabaseUser: SupabaseUser | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -32,30 +33,30 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
   // Handle session and user profile data
-  const handleUserData = async (supabaseUser: SupabaseUser | null) => {
-    if (!supabaseUser) {
+  const handleUserData = async (session: Session | null) => {
+    if (!session?.user) {
       setUser(null);
       setSupabaseUser(null);
+      setSession(null);
       localStorage.removeItem("sai-balaji-user");
       return;
     }
     
+    const supabaseUser = session.user;
     setSupabaseUser(supabaseUser);
+    setSession(session);
     
     try {
-      // Use a complete type assertion to bypass TypeScript's type checking
-      // for the Supabase client since our database schema is not properly reflected in the types
-      const response = await (supabase as any)
+      // Fetch profile data using the session user id
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
-        
-      const profile = response.data as ProfileData | null;
-      const error = response.error;
         
       if (error) {
         console.error("Error fetching user profile:", error);
@@ -98,23 +99,18 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       try {
         // First set up the auth state listener to avoid race conditions
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log("Auth state changed:", event, session?.user?.email);
-            
-            if (event === 'SIGNED_IN' && session?.user) {
-              await handleUserData(session.user);
-            } else if (event === 'SIGNED_OUT') {
-              handleUserData(null);
-            }
+          (event, currentSession) => {
+            console.log("Auth state changed:", event, currentSession?.user?.email);
+            handleUserData(currentSession);
           }
         );
         
         // Then check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
         
-        if (session?.user) {
-          console.log("Found existing session", session.user.email);
-          await handleUserData(session.user);
+        if (data.session) {
+          console.log("Found existing session", data.session.user.email);
+          await handleUserData(data.session);
         } else {
           console.log("No existing session found");
           handleUserData(null);
@@ -154,13 +150,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       
-      if (data.user) {
-        console.log("Login successful for:", data.user.email);
-        await handleUserData(data.user);
+      if (data.session) {
+        console.log("Login successful for:", data.user?.email);
+        await handleUserData(data.session);
         
         toast({ 
           title: "Login successful", 
-          description: `Welcome back, ${data.user.email}!` 
+          description: `Welcome back, ${data.user?.email}!` 
         });
         
         navigate('/dashboard');
@@ -198,6 +194,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       // Clear user data
       setUser(null);
       setSupabaseUser(null);
+      setSession(null);
       localStorage.removeItem("sai-balaji-user");
       
       navigate('/login');
@@ -222,7 +219,8 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: name,
             role: role
-          }
+          },
+          emailRedirectTo: window.location.origin
         }
       });
       
@@ -260,6 +258,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         supabaseUser,
+        session,
         isAuthenticated: !!user,
         isLoading,
         login,
