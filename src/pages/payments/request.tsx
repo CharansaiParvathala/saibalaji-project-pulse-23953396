@@ -18,8 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { generateId, getProjects, getProgressEntries, savePaymentRequest, updateProgressEntry } from "@/lib/storage";
 import { getCurrentLocation } from "@/lib/geolocation";
-import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry, PaymentRequest } from "@/types";
+import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry, PaymentRequest, Vehicle, Driver } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function RequestPayment() {
   const navigate = useNavigate();
@@ -43,6 +44,15 @@ export default function RequestPayment() {
     water: "",
     other: "",
   });
+  
+  // Vehicle related states
+  const [vehicleUsed, setVehicleUsed] = useState(false);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<string>("");
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [selectedDriver, setSelectedDriver] = useState<string>("");
+  const [meterStartReading, setMeterStartReading] = useState<Photo | null>(null);
+  const [meterEndReading, setMeterEndReading] = useState<Photo | null>(null);
 
   const availablePurposes: { value: PaymentPurpose; label: string }[] = [
     { value: "food", label: "Food" },
@@ -73,8 +83,54 @@ export default function RequestPayment() {
         : allProjects.filter(p => p.createdBy === user.id);
       
       setProjects(userProjects);
+      
+      // Load vehicles and drivers from Supabase
+      fetchVehiclesAndDrivers();
     }
   }, [user]);
+  
+  const fetchVehiclesAndDrivers = async () => {
+    try {
+      // Fetch vehicles
+      const { data: vehiclesData, error: vehiclesError } = await supabase
+        .from('vehicles')
+        .select('*');
+      
+      if (vehiclesError) {
+        console.error("Error fetching vehicles:", vehiclesError);
+        toast({
+          title: "Error",
+          description: "Failed to load vehicles",
+          variant: "destructive",
+        });
+      } else {
+        setVehicles(vehiclesData);
+      }
+      
+      // Fetch drivers
+      const { data: driversData, error: driversError } = await supabase
+        .from('drivers')
+        .select('*');
+      
+      if (driversError) {
+        console.error("Error fetching drivers:", driversError);
+        toast({
+          title: "Error",
+          description: "Failed to load drivers",
+          variant: "destructive",
+        });
+      } else {
+        setDrivers(driversData);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     // Load progress entries for the selected project
@@ -89,7 +145,7 @@ export default function RequestPayment() {
     setSelectedEntry("");
   }, [selectedProject]);
 
-  const capturePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const capturePhoto = async (event: React.ChangeEvent<HTMLInputElement>, isMeterReading: boolean = false, isStartReading: boolean = true) => {
     if (!event.target.files || event.target.files.length === 0) return;
     
     try {
@@ -121,7 +177,16 @@ export default function RequestPayment() {
           },
         };
         
-        setPhotos((prev) => [...prev, newPhoto]);
+        if (isMeterReading) {
+          if (isStartReading) {
+            setMeterStartReading(newPhoto);
+          } else {
+            setMeterEndReading(newPhoto);
+          }
+        } else {
+          setPhotos((prev) => [...prev, newPhoto]);
+        }
+        
         setLoading(false);
       };
       
@@ -226,6 +291,36 @@ export default function RequestPayment() {
       return;
     }
     
+    // Vehicle validation
+    if (vehicleUsed) {
+      if (!selectedVehicle) {
+        toast({
+          title: "Error",
+          description: "You must select a vehicle",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!selectedDriver) {
+        toast({
+          title: "Error",
+          description: "You must select a driver",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!meterStartReading) {
+        toast({
+          title: "Error",
+          description: "You must add meter start reading photo",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     try {
       setLoading(true);
       
@@ -248,7 +343,19 @@ export default function RequestPayment() {
       
       // Create a new payment request ID
       const newRequestId = generateId();
+
+      // Prepare vehicle-related data
+      const vehicleData = vehicleUsed ? {
+        vehicle_used: true,
+        vehicle_id: selectedVehicle,
+        driver_id: selectedDriver,
+        meter_start_reading: meterStartReading,
+        meter_end_reading: meterEndReading
+      } : {
+        vehicle_used: false
+      };
       
+      // Create payment request object
       const paymentRequest: PaymentRequest = {
         id: newRequestId,
         projectId,
@@ -260,10 +367,36 @@ export default function RequestPayment() {
         status: "pending",
         requestedBy: user?.id || "Anonymous",
         requestedAt: new Date().toISOString(),
+        ...vehicleData
       };
-      
-      // Save the payment request
-      savePaymentRequest(paymentRequest);
+
+      let response;
+      // Insert payment request to Supabase
+      try {
+        // Try to insert to Supabase
+        response = await supabase
+          .from('payment_requests')
+          .insert([{
+            project_id: projectId,
+            amount: parseFloat(amount),
+            description,
+            purposes,
+            purpose_costs: parsedPurposeCosts,
+            photos,
+            requested_by: user?.id,
+            ...vehicleData
+          }]);
+        
+        if (response.error) {
+          console.error("Supabase error, falling back to local storage:", response.error);
+          // If Supabase insertion fails, fall back to local storage
+          savePaymentRequest(paymentRequest);
+        }
+      } catch (error) {
+        console.error("Error with Supabase, using local storage:", error);
+        // Fall back to local storage
+        savePaymentRequest(paymentRequest);
+      }
       
       // Update the progress entry with this payment request ID
       if (progressId) {
@@ -434,6 +567,106 @@ export default function RequestPayment() {
                   placeholder="Provide details about this payment request"
                 />
               </div>
+              
+              <div className="pt-4 border-t">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="vehicleUsed" 
+                    checked={vehicleUsed} 
+                    onCheckedChange={(checked) => setVehicleUsed(checked as boolean)}
+                  />
+                  <Label htmlFor="vehicleUsed" className="font-medium">This work uses vehicle</Label>
+                </div>
+              </div>
+              
+              {vehicleUsed && (
+                <div className="space-y-4 border-l-2 pl-4 mt-2 border-primary/20">
+                  <div>
+                    <Label htmlFor="vehicle">Select Vehicle</Label>
+                    <Select
+                      value={selectedVehicle}
+                      onValueChange={setSelectedVehicle}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a vehicle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vehicles.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={vehicle.id}>
+                            {vehicle.model} ({vehicle.registration_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="driver">Select Driver</Label>
+                    <Select
+                      value={selectedDriver}
+                      onValueChange={setSelectedDriver}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a driver" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drivers.map((driver) => (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            {driver.name} ({driver.license_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="meterStart">Meter Start Reading (Photo)</Label>
+                    <Input
+                      id="meterStart"
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => capturePhoto(e, true, true)}
+                      disabled={loading}
+                      className="mt-1"
+                    />
+                    {meterStartReading && (
+                      <div className="mt-2">
+                        <img
+                          src={meterStartReading.url}
+                          alt="Meter Start Reading"
+                          className="w-full max-h-40 object-contain rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="meterEnd">Meter End Reading (Photo) - Optional</Label>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      You can add this later after work completion
+                    </p>
+                    <Input
+                      id="meterEnd"
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => capturePhoto(e, true, false)}
+                      disabled={loading}
+                      className="mt-1"
+                    />
+                    {meterEndReading && (
+                      <div className="mt-2">
+                        <img
+                          src={meterEndReading.url}
+                          alt="Meter End Reading"
+                          className="w-full max-h-40 object-contain rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -449,7 +682,7 @@ export default function RequestPayment() {
                   type="file"
                   accept="image/*"
                   capture="environment"
-                  onChange={capturePhoto}
+                  onChange={(e) => capturePhoto(e)}
                   disabled={loading}
                 />
                 <p className="text-sm text-muted-foreground mt-1">

@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Card,
   CardContent,

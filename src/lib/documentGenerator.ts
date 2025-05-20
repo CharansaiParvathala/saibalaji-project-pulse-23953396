@@ -1,182 +1,631 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Project, ProgressEntry, PaymentRequest, 
-  Photo, Vehicle, Driver 
-} from "@/types";
-import { getProjects, getProgressEntries, getPaymentRequests, getVehicles, getDrivers } from "@/lib/storage";
+import { saveAs } from 'file-saver';
+// Note: Requiring document in TypeScript requires the use of dynamic imports
+// We'll create a wrapper function that handles the dynamic import
 
-// Helper function to format date
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+export interface GenerateDocxOptions {
+  title: string;
+  projects: any[];
+  progressEntries: any[];
+  paymentRequests: any[];
+  generatedBy: string;
+  generatedDate: string;
 }
 
-// Function to generate a complete data report in DOCX format
-export async function generateDataReport(fileName: string): Promise<Blob | null> {
+export async function generateDocx(options: GenerateDocxOptions): Promise<Blob> {
   try {
-    // Use local storage instead of Supabase queries
-    // This avoids type errors until the database tables are properly set up
-    const projects = getProjects();
-    const progress = getProgressEntries();
-    const payments = getPaymentRequests();
-    const users = []; // We'll handle users differently for now
-    const vehicles = getVehicles();
-    const drivers = getDrivers();
-    const photos = []; // photos will be handled differently
+    // Dynamically import docx library
+    const docx = await import('docx');
     
-    // Create document content
-    const documentContent = `
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; }
-          h1 { color: #0000aa; }
-          h2 { color: #aa0000; margin-top: 20px; }
-          table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-          th { background-color: #d3d3d3; padding: 8px; border: 1px solid #808080; }
-          td { padding: 8px; border: 1px solid #808080; }
-          .section { margin-bottom: 30px; }
-        </style>
-      </head>
-      <body>
-        <h1>Sai Balaji Construction - Complete Data Report</h1>
-        <p>Generated on: ${new Date().toLocaleDateString('en-IN', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}</p>
-        
-        <div class="section">
-          <h2>1. Projects (${projects?.length || 0})</h2>
-          <table>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Workers</th>
-              <th>Status</th>
-              <th>Created</th>
-            </tr>
-            ${projects?.map(p => `
-              <tr>
-                <td>${p.id}</td>
-                <td>${p.name}</td>
-                <td>${p.numWorkers}</td>
-                <td>${p.status}</td>
-                <td>${formatDate(p.createdAt)}</td>
-              </tr>
-            `).join('') || 'No projects found.'}
-          </table>
-        </div>
-        
-        <div class="section">
-          <h2>2. Progress Entries (${progress?.length || 0})</h2>
-          <table>
-            <tr>
-              <th>Date</th>
-              <th>Project</th>
-              <th>Distance</th>
-              <th>Workers</th>
-              <th>Status</th>
-            </tr>
-            ${progress?.map(p => `
-              <tr>
-                <td>${formatDate(p.date)}</td>
-                <td>${(projects?.find(proj => proj.id === p.projectId)?.name) || 'Unknown'}</td>
-                <td>${p.distanceCompleted || 0} meters</td>
-                <td>${p.workersPresent || 0}</td>
-                <td>${p.status || 'Unknown'}</td>
-              </tr>
-            `).join('') || 'No progress entries found.'}
-          </table>
-        </div>
-        
-        <div class="section">
-          <h2>3. Payment Requests (${payments?.length || 0})</h2>
-          <table>
-            <tr>
-              <th>Project</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Requested</th>
-              <th>Paid Date</th>
-            </tr>
-            ${payments?.map(p => `
-              <tr>
-                <td>${(projects?.find(proj => proj.id === p.projectId)?.name) || 'Unknown'}</td>
-                <td>₹${p.amount}</td>
-                <td>${p.status}</td>
-                <td>${formatDate(p.requestedAt)}</td>
-                <td>${p.paidDate ? formatDate(p.paidDate) : 'Not paid'}</td>
-              </tr>
-            `).join('') || 'No payment requests found.'}
-          </table>
-        </div>
-        
-        <div class="section">
-          <h2>4. Vehicles (${vehicles?.length || 0})</h2>
-          <table>
-            <tr>
-              <th>Model</th>
-              <th>Registration</th>
-              <th>Type</th>
-            </tr>
-            ${vehicles?.map(v => `
-              <tr>
-                <td>${v.model}</td>
-                <td>${v.registrationNumber}</td>
-                <td>${v.type}</td>
-              </tr>
-            `).join('') || 'No vehicles found.'}
-          </table>
-        </div>
-        
-        <div class="section">
-          <h2>5. Drivers (${drivers?.length || 0})</h2>
-          <table>
-            <tr>
-              <th>Name</th>
-              <th>License</th>
-              <th>Type</th>
-            </tr>
-            ${drivers?.map(d => `
-              <tr>
-                <td>${d.name}</td>
-                <td>${d.licenseNumber}</td>
-                <td>${d.type}</td>
-              </tr>
-            `).join('') || 'No drivers found.'}
-          </table>
-        </div>
-        
-        <p>--- End of Report ---</p>
-      </body>
-    </html>
-    `;
-    
-    // Convert HTML to Blob
-    const blob = new Blob([documentContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    
-    return blob;
-  } catch (error) {
-    console.error('Error generating data report:', error);
-    return null;
-  }
-}
+    const { 
+      Document, Paragraph, TextRun, HeadingLevel, Table,
+      TableRow, TableCell, BorderStyle, WidthType, AlignmentType,
+      TabStopPosition, TabStopType, TableOfContents, PageBreak
+    } = docx;
 
-// Function to download the report
-export function downloadReport(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${fileName}.docx`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    // Format date
+    const formattedDate = new Date(options.generatedDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    // Create document title and intro
+    const documentTitle = new Paragraph({
+      text: options.title,
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        after: 400
+      }
+    });
+    
+    const generatedInfo = new Paragraph({
+      children: [
+        new TextRun({
+          text: `Generated by: ${options.generatedBy}`,
+          bold: true,
+          size: 24
+        }),
+        new TextRun({
+          text: `   Date: ${formattedDate}`,
+          bold: true,
+          size: 24
+        })
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        after: 400
+      }
+    });
+    
+    // Create table of contents
+    const toc = new TableOfContents("Table of Contents", {
+      hyperlink: true,
+      headingStyleRange: {
+        start: 1,
+        end: 3,
+      },
+    });
+    
+    const tocHeading = new Paragraph({
+      text: "TABLE OF CONTENTS",
+      heading: HeadingLevel.HEADING_1,
+      spacing: {
+        before: 400,
+        after: 200
+      }
+    });
+    
+    // Add page break before main content
+    const pageBreak = new Paragraph({
+      children: [new PageBreak()]
+    });
+    
+    // PROJECTS SECTION
+    const projectsHeading = new Paragraph({
+      text: "1. PROJECTS",
+      heading: HeadingLevel.HEADING_1,
+      spacing: {
+        before: 400,
+        after: 200
+      }
+    });
+    
+    const projectsSummary = new Paragraph({
+      text: `Total Projects: ${options.projects.length}`,
+      spacing: {
+        after: 200
+      }
+    });
+    
+    // Create projects table
+    const projectsTableRows = [
+      new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Project Name",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Status",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 20,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Workers",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 25,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Created By",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 25,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Created At",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          })
+        ]
+      }),
+    ];
+    
+    // Add project rows
+    options.projects.forEach(project => {
+      projectsTableRows.push(
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph(project.name)]
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                text: project.status,
+                alignment: AlignmentType.CENTER
+              })]
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                text: project.num_workers.toString(),
+                alignment: AlignmentType.CENTER
+              })]
+            }),
+            new TableCell({
+              children: [new Paragraph(project.created_by)]
+            }),
+            new TableCell({
+              children: [new Paragraph(new Date(project.created_at).toLocaleDateString())]
+            })
+          ]
+        })
+      );
+    });
+    
+    const projectsTable = new Table({
+      rows: projectsTableRows,
+      width: {
+        size: 100,
+        type: WidthType.PERCENTAGE,
+      },
+      borders: {
+        top: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        bottom: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        left: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        right: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        insideHorizontal: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        insideVertical: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+      },
+    });
+    
+    // PROGRESS ENTRIES SECTION
+    const progressHeading = new Paragraph({
+      text: "2. PROGRESS ENTRIES",
+      heading: HeadingLevel.HEADING_1,
+      spacing: {
+        before: 400,
+        after: 200
+      }
+    });
+    
+    const progressSummary = new Paragraph({
+      text: `Total Progress Entries: ${options.progressEntries.length}`,
+      spacing: {
+        after: 200
+      }
+    });
+    
+    // Create progress entries table
+    const progressTableRows = [
+      new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            width: {
+              size: 20,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Project",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Date",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Status",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Distance",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 35,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Notes",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          })
+        ]
+      }),
+    ];
+    
+    // Add progress entry rows
+    options.progressEntries.forEach(entry => {
+      const projectName = options.projects.find(p => p.id === entry.project_id)?.name || entry.project_id;
+      
+      progressTableRows.push(
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph(projectName)]
+            }),
+            new TableCell({
+              children: [new Paragraph(new Date(entry.date).toLocaleDateString())]
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                text: entry.status || "N/A",
+                alignment: AlignmentType.CENTER
+              })]
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                text: entry.distance_completed ? `${entry.distance_completed} km` : "N/A",
+                alignment: AlignmentType.CENTER
+              })]
+            }),
+            new TableCell({
+              children: [new Paragraph(entry.notes || "")]
+            })
+          ]
+        })
+      );
+    });
+    
+    const progressTable = new Table({
+      rows: progressTableRows,
+      width: {
+        size: 100,
+        type: WidthType.PERCENTAGE,
+      },
+      borders: {
+        top: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        bottom: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        left: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        right: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        insideHorizontal: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        insideVertical: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+      },
+    });
+    
+    // PAYMENT REQUESTS SECTION
+    const paymentHeading = new Paragraph({
+      text: "3. PAYMENT REQUESTS",
+      heading: HeadingLevel.HEADING_1,
+      spacing: {
+        before: 400,
+        after: 200
+      }
+    });
+    
+    const paymentSummary = new Paragraph({
+      text: `Total Payment Requests: ${options.paymentRequests.length}`,
+      spacing: {
+        after: 200
+      }
+    });
+    
+    // Calculate total payment amount
+    const totalAmount = options.paymentRequests.reduce((sum, req) => sum + (req.amount || 0), 0);
+    const totalAmountText = new Paragraph({
+      text: `Total Amount: ₹${totalAmount.toFixed(2)}`,
+      spacing: {
+        after: 200
+      }
+    });
+    
+    // Create payment requests table
+    const paymentTableRows = [
+      new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            width: {
+              size: 20,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Project",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Amount (₹)",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Status",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 15,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Requested On",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          }),
+          new TableCell({
+            width: {
+              size: 35,
+              type: WidthType.PERCENTAGE,
+            },
+            children: [new Paragraph({
+              text: "Description",
+              alignment: AlignmentType.CENTER,
+              bold: true
+            })],
+            shading: {
+              fill: "F2F2F2"
+            }
+          })
+        ]
+      }),
+    ];
+    
+    // Add payment request rows
+    options.paymentRequests.forEach(payment => {
+      const projectName = options.projects.find(p => p.id === payment.project_id)?.name || payment.project_id;
+      
+      paymentTableRows.push(
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph(projectName)]
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                text: payment.amount.toFixed(2),
+                alignment: AlignmentType.RIGHT
+              })]
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                text: payment.status,
+                alignment: AlignmentType.CENTER
+              })]
+            }),
+            new TableCell({
+              children: [new Paragraph(new Date(payment.requested_at).toLocaleDateString())]
+            }),
+            new TableCell({
+              children: [new Paragraph(payment.description || "")]
+            })
+          ]
+        })
+      );
+    });
+    
+    const paymentTable = new Table({
+      rows: paymentTableRows,
+      width: {
+        size: 100,
+        type: WidthType.PERCENTAGE,
+      },
+      borders: {
+        top: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        bottom: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        left: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        right: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        insideHorizontal: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+        insideVertical: {
+          style: BorderStyle.SINGLE,
+          size: 1,
+          color: "000000",
+        },
+      },
+    });
+    
+    // Create the document
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            documentTitle,
+            generatedInfo,
+            tocHeading,
+            toc,
+            pageBreak,
+            projectsHeading,
+            projectsSummary,
+            projectsTable,
+            progressHeading,
+            progressSummary,
+            progressTable,
+            paymentHeading,
+            paymentSummary,
+            totalAmountText,
+            paymentTable
+          ],
+        },
+      ],
+    });
+
+    // Generate and return as blob
+    return await docx.Packer.toBlob(doc);
+  } catch (error) {
+    console.error("Error generating document:", error);
+    throw new Error("Failed to generate document");
+  }
 }

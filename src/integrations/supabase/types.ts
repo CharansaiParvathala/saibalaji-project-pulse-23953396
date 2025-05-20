@@ -9,6 +9,147 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      backup_links: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          created_at: string | null
+          id: string
+          license_number: string
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          license_number: string
+          name: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          license_number?: string
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      payment_requests: {
+        Row: {
+          amount: number
+          comments: string | null
+          created_at: string | null
+          description: string | null
+          driver_id: string | null
+          id: string
+          meter_end_reading: Json | null
+          meter_start_reading: Json | null
+          paid_date: string | null
+          photos: Json | null
+          project_id: string
+          purpose_costs: Json | null
+          purposes: string[]
+          requested_at: string | null
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scheduled_date: string | null
+          status: string
+          status_history: Json | null
+          vehicle_id: string | null
+          vehicle_used: boolean | null
+        }
+        Insert: {
+          amount: number
+          comments?: string | null
+          created_at?: string | null
+          description?: string | null
+          driver_id?: string | null
+          id?: string
+          meter_end_reading?: Json | null
+          meter_start_reading?: Json | null
+          paid_date?: string | null
+          photos?: Json | null
+          project_id: string
+          purpose_costs?: Json | null
+          purposes: string[]
+          requested_at?: string | null
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scheduled_date?: string | null
+          status?: string
+          status_history?: Json | null
+          vehicle_id?: string | null
+          vehicle_used?: boolean | null
+        }
+        Update: {
+          amount?: number
+          comments?: string | null
+          created_at?: string | null
+          description?: string | null
+          driver_id?: string | null
+          id?: string
+          meter_end_reading?: Json | null
+          meter_start_reading?: Json | null
+          paid_date?: string | null
+          photos?: Json | null
+          project_id?: string
+          purpose_costs?: Json | null
+          purposes?: string[]
+          requested_at?: string | null
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scheduled_date?: string | null
+          status?: string
+          status_history?: Json | null
+          vehicle_id?: string | null
+          vehicle_used?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_requests_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -27,6 +168,173 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+        }
+        Relationships: []
+      }
+      progress_entries: {
+        Row: {
+          correction_request: Json | null
+          created_at: string | null
+          created_by: string | null
+          date: string | null
+          distance_completed: number | null
+          id: string
+          is_locked: boolean | null
+          notes: string | null
+          payment_requests: string[] | null
+          photos: Json | null
+          project_id: string
+          project_name: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          time_spent: number | null
+          user_name: string | null
+          vehicle_used: Json | null
+          workers_present: number | null
+        }
+        Insert: {
+          correction_request?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string | null
+          distance_completed?: number | null
+          id?: string
+          is_locked?: boolean | null
+          notes?: string | null
+          payment_requests?: string[] | null
+          photos?: Json | null
+          project_id: string
+          project_name?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          time_spent?: number | null
+          user_name?: string | null
+          vehicle_used?: Json | null
+          workers_present?: number | null
+        }
+        Update: {
+          correction_request?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string | null
+          distance_completed?: number | null
+          id?: string
+          is_locked?: boolean | null
+          notes?: string | null
+          payment_requests?: string[] | null
+          photos?: Json | null
+          project_id?: string
+          project_name?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          time_spent?: number | null
+          user_name?: string | null
+          vehicle_used?: Json | null
+          workers_present?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          name: string
+          num_workers: number
+          status: string
+          total_distance: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          name: string
+          num_workers?: number
+          status?: string
+          total_distance?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          name?: string
+          num_workers?: number
+          status?: string
+          total_distance?: number | null
+        }
+        Relationships: []
+      }
+      storage_metrics: {
+        Row: {
+          id: string
+          last_updated: string | null
+          percentage_used: number
+          total_size: number
+          used_size: number
+        }
+        Insert: {
+          id?: string
+          last_updated?: string | null
+          percentage_used?: number
+          total_size?: number
+          used_size?: number
+        }
+        Update: {
+          id?: string
+          last_updated?: string | null
+          percentage_used?: number
+          total_size?: number
+          used_size?: number
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          additional_details: Json | null
+          created_at: string | null
+          fitness_certificate: Json | null
+          id: string
+          model: string
+          pollution_certificate: Json | null
+          registration_number: string
+          type: string
+        }
+        Insert: {
+          additional_details?: Json | null
+          created_at?: string | null
+          fitness_certificate?: Json | null
+          id?: string
+          model: string
+          pollution_certificate?: Json | null
+          registration_number: string
+          type: string
+        }
+        Update: {
+          additional_details?: Json | null
+          created_at?: string | null
+          fitness_certificate?: Json | null
+          id?: string
+          model?: string
+          pollution_certificate?: Json | null
+          registration_number?: string
+          type?: string
         }
         Relationships: []
       }

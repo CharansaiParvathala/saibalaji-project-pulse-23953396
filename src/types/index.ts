@@ -1,10 +1,34 @@
 
+// User related types
+export type UserRole = "leader" | "checker" | "owner" | "admin";
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: "leader" | "checker" | "owner" | "admin";
-  createdAt?: string;
+  role: UserRole;
+}
+
+// Project related types
+export interface Project {
+  id: string;
+  name: string;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+  numWorkers: number;
+  totalDistance: number;
+}
+
+// Progress related types
+export interface Photo {
+  id: string;
+  url: string;
+  metadata: {
+    timestamp: string;
+    location: GeoLocation;
+    [key: string]: any;
+  };
 }
 
 export interface GeoLocation {
@@ -13,114 +37,30 @@ export interface GeoLocation {
   accuracy: number;
 }
 
-export interface Photo {
-  id: string;
-  url: string;
-  metadata: {
-    timestamp: string;
-    location: GeoLocation;
-  };
-}
-
-export interface Vehicle {
-  id: string;
-  model: string;
-  registrationNumber: string;
-  type: "truck" | "car" | "bike";
-  pollutionCertificate?: {
-    number: string;
-    expiryDate: string;
-  };
-  fitnessCertificate?: {
-    number: string;
-    expiryDate: string;
-  };
-  additionalDetails?: Record<string, string>;
-}
-
-export interface Driver {
-  id: string;
-  name: string;
-  licenseNumber: string;
-  type: "internal" | "external";
-}
-
-export interface MeterReading {
-  id: string;
-  vehicleId: string;
-  reading: number;
-  type: "start" | "end";
-  photo: Photo;
-}
-
-export type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
-export type UserRole = "leader" | "checker" | "owner" | "admin";
-
-export interface PaymentStatusHistoryEntry {
-  status: PaymentRequest["status"];
-  changedBy: string;
-  changedAt: string;
-  comments?: string;
-}
-
-export interface Notification {
-  id: string;
-  userId: string;
-  type: "payment_status" | "progress_update" | "general" | "storage_alert";
-  title: string;
-  message: string;
-  relatedId?: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  numWorkers: number;
-  createdBy: string;
-  createdAt: string;
-  status: "active" | "completed" | "on-hold";
-  totalDistance?: number; // Total work distance in meters
-}
-
 export interface ProgressEntry {
   id: string;
   projectId: string;
   date: string;
-  photos?: Photo[];
-  vehicleUsed?: {
-    vehicleId: string;
-    driverId?: string;
-    externalDriver?: {
-      name: string;
-      licenseNumber: string;
-    };
-    meterReadings?: {
-      start: MeterReading;
-      end: MeterReading;
-    };
-  };
-  distanceCompleted?: number; // Distance completed in meters
-  timeSpent?: number; // Time spent in hours
-  workersPresent?: number; // Number of workers present
-  notes?: string; // Additional notes
-  paymentRequests?: string[];
+  photos: Photo[];
+  distanceCompleted: number;
+  timeSpent: number;
+  workersPresent: number;
+  notes: string;
+  status: string;
+  createdBy: string;
   submittedBy?: string;
   submittedAt?: string;
-  status?: "draft" | "submitted" | "approved" | "correction-requested" | "locked" | "rejected";
-  isLocked?: boolean;
-  correctionRequest?: {
-    message: string;
-    requestedAt: string;
-    requestedBy: string;
+  isLocked: boolean;
+  paymentRequests?: string[];
+  vehicleUsed?: {
+    vehicleId: string;
+    driverId: string;
+    [key: string]: any;
   };
-  createdBy?: string; // ID of the user who created this entry
-  userName?: string; // Name of the user who created this entry
-  projectName?: string; // Name of the project this entry belongs to
-  reviewedBy?: string; // ID of the user who reviewed this entry
-  reviewedAt?: string; // Timestamp when the entry was reviewed
 }
+
+// Payment request types
+export type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
 
 export interface PaymentRequest {
   id: string;
@@ -128,7 +68,7 @@ export interface PaymentRequest {
   amount: number;
   description: string;
   purposes: PaymentPurpose[];
-  purposeCosts?: Record<PaymentPurpose, number>; // Store cost for each purpose
+  purposeCosts: Record<PaymentPurpose, number>;
   photos: Photo[];
   status: "pending" | "approved" | "rejected" | "scheduled" | "paid";
   requestedBy: string;
@@ -136,12 +76,70 @@ export interface PaymentRequest {
   reviewedBy?: string;
   reviewedAt?: string;
   comments?: string;
-  statusHistory?: PaymentStatusHistoryEntry[];
+  statusHistory?: PaymentStatusHistoryItem[];
   scheduledDate?: string;
   paidDate?: string;
-  vehicleUsed?: boolean;
-  meterReadings?: {
-    start?: MeterReading;
-    end?: MeterReading;
-  };
+  vehicle_used?: boolean;
+  vehicle_id?: string;
+  driver_id?: string;
+  meter_start_reading?: Photo;
+  meter_end_reading?: Photo;
+}
+
+export interface PaymentStatusHistoryItem {
+  status: "pending" | "approved" | "rejected" | "scheduled" | "paid";
+  changedBy: string;
+  changedAt: string;
+  comments?: string;
+}
+
+// Vehicle and driver types
+export interface Vehicle {
+  id: string;
+  model: string;
+  registration_number: string;
+  type: string;
+  pollution_certificate?: any;
+  fitness_certificate?: any;
+  additional_details?: any;
+  created_at: string;
+}
+
+export interface Driver {
+  id: string;
+  name: string;
+  license_number: string;
+  type: string;
+  created_at: string;
+}
+
+// Notification types
+export interface Notification {
+  id: string;
+  userId: string;
+  type: "payment_status" | "progress_review" | "system" | "storage_warning";
+  title: string;
+  message: string;
+  relatedId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+// Backup links
+export interface BackupLink {
+  id: string;
+  title: string;
+  url: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+// Storage metrics
+export interface StorageMetrics {
+  id: string;
+  total_size: number;
+  used_size: number;
+  percentage_used: number;
+  last_updated: string;
 }
