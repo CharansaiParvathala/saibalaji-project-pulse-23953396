@@ -1,3 +1,5 @@
+
+import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "@/pages/Dashboard";
@@ -26,8 +28,18 @@ import ReviewSubmission from "@/pages/submissions/[id]";
 import ReviewHistory from "@/pages/history";
 import Credentials from "@/pages/users/credentials";
 import BackupPage from "@/pages/backup";
+import BackupLinks from "@/pages/backup/links";
+import BackupDownload from "@/pages/backup/download";
+
+// Import the default users initialization function
+import { initializeDefaultUsers } from "@/lib/storage/initializeDefaultUsers";
 
 function App() {
+  // Initialize default users on app startup
+  useEffect(() => {
+    initializeDefaultUsers();
+  }, []);
+  
   return (
     <>
       <Routes>
@@ -76,10 +88,13 @@ function App() {
         
         {/* Backup & Data Management */}
         <Route path="/backup" element={<BackupPage />} />
+        <Route path="/backup/links" element={<BackupLinks />} />
+        <Route path="/backup/download" element={<BackupDownload />} />
         
         {/* 404 - Always keep this as the last route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
       <Toaster />
     </>
   );

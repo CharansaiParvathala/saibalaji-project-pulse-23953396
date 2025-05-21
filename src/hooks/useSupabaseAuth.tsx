@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isLoading: boolean; // Added for compatibility
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -15,12 +16,12 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string, fullName: string, role: UserRole) => Promise<{ error: any }>;
-  isLoading: boolean; // Added missing property
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isLoading: true,
   isAuthenticated: false,
   signIn: async () => ({ error: null }),
   signOut: async () => {},
@@ -28,7 +29,6 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({ error: null }),
   logout: async () => {},
   signup: async () => ({ error: null }),
-  isLoading: true // Added missing property
 });
 
 export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -133,6 +133,7 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
   const value = {
     user,
     loading,
+    isLoading: loading,
     isAuthenticated: !!user,
     signIn: login,
     signOut: async () => {
@@ -167,7 +168,6 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       navigate('/login');
     },
     signup,
-    isLoading: loading // Add missing property
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -175,5 +175,3 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
 
 // Export the hook
 export const useSupabaseAuth = () => useContext(AuthContext);
-
-// For toast notifications

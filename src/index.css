@@ -3,70 +3,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import VT323 font - classic terminal/retro look */
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Nunito:wght@400;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 75.3%; /* Classic gray background - #c0c0c0 */
-    --foreground: 0 0% 0%;    /* Black text */
+    --background: 210 20% 98%; /* #F8F9FA */
+    --foreground: 210 15% 32%; /* #45545E */
 
-    --card: 0 0% 94.1%;       /* Light gray card - #f0f0f0 */
-    --card-foreground: 0 0% 0%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 210 40% 25%; /* #2C3E50 */
 
-    --popover: 0 0% 94.1%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 25%;
     
-    --primary: 240 100% 33.3%;  /* Classic blue - #0000aa */
+    --primary: 210 35% 62%; /* #7C9CBF */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 100% 33.3%;  /* Classic red - #aa0000 */
+    --secondary: 15 88% 78%; /* #F8B195 */
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 0 0% 82.7%;       /* Light gray - #d3d3d3 */
-    --muted-foreground: 0 0% 25.1%;
+    --muted: 210 20% 93%; /* #E9EDF2 */
+    --muted-foreground: 215 15% 45%; /* #637381 */
 
-    --accent: 120 100% 33.3%;  /* Classic green - #00aa00 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 160 35% 80%; /* #B8E1D4 */
+    --accent-foreground: 210 40% 25%;
 
-    --destructive: 0 100% 40%;  /* Bright red - #cc0000 */
+    --destructive: 0 68% 67%; /* #E57373 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 50.2%;       /* Gray border - #808080 */
-    --input: 0 0% 50.2%;
-    --ring: 0 0% 50.2%;
+    --border: 205 25% 86%; /* #D9E2EC */
+    --input: 205 25% 86%;
+    --ring: 210 35% 62%;
 
-    --radius: 0px;             /* Sharp corners for 90s look */
+    --radius: 0.5rem;
   }
  
   .dark {
-    --background: 240 100% 25%;   /* Classic terminal blue - #000080 */
-    --foreground: 0 0% 100%;      /* White text */
+    --background: 220 16% 22%; /* #2E3440 */
+    --foreground: 218 27% 94%; /* #ECEFF4 */
 
-    --card: 0 0% 12.5%;          /* Dark gray card - #202020 */
-    --card-foreground: 0 0% 100%;
+    --card: 220 13% 28%; /* #3B4252 */
+    --card-foreground: 218 27% 94%;
 
-    --popover: 0 0% 12.5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 220 13% 28%;
+    --popover-foreground: 218 27% 94%;
     
-    --primary: 120 100% 50%;      /* Terminal green - #00ff00 */
-    --primary-foreground: 0 0% 0%;
+    --primary: 197 37% 67%; /* #88C0D0 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 300 100% 50%;    /* Terminal magenta - #ff00ff */
+    --secondary: 354 42% 56%; /* #BF616A */
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 0 0% 25.1%;         /* Dark gray - #404040 */
-    --muted-foreground: 0 0% 75.3%;
+    --muted: 220 16% 36%; /* #4C566A */
+    --muted-foreground: 220 16% 80%;
 
-    --accent: 60 100% 50%;        /* Terminal yellow - #ffff00 */
-    --accent-foreground: 0 0% 0%;
+    --accent: 197 37% 67%; /* #88C0D0 */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 100% 50%;     /* Bright red - #ff0000 */
+    --destructive: 0 63% 50%; /* #BF4040 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 37.6%;         /* Gray border - #606060 */
-    --input: 0 0% 37.6%;
-    --ring: 0 0% 37.6%;
+    --border: 220 16% 36%;
+    --input: 220 16% 36%;
+    --ring: 197 37% 67%;
   }
 }
  
@@ -75,103 +75,78 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-mono;
+    @apply bg-background text-foreground font-sans;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-mono;
+    @apply font-display font-semibold;
   }
 }
 
-/* 90s Style Overrides */
+/* Custom Component Styles */
 @layer components {
-  .btn-90s {
-    @apply border-2 border-solid font-mono shadow-90s active:shadow-inset-90s transition-none;
+  .data-card {
+    @apply bg-white rounded-lg shadow-soft p-4 border border-border/50 transition-all hover:shadow-medium;
   }
   
-  .card-90s {
-    @apply border-2 border-solid shadow-90s;
-  }
-
-  .input-90s {
-    @apply border-2 border-inset bg-white;
-  }
-
-  /* Custom inset style for form elements */
-  .border-inset {
-    border-style: inset;
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 rounded-md px-4 py-2 transition-colors;
   }
   
-  /* Custom outset style for buttons and cards */
-  .border-outset {
-    border-style: outset;
+  .btn-outline {
+    @apply border border-border bg-transparent hover:bg-muted text-foreground rounded-md px-4 py-2 transition-colors;
   }
   
-  /* Pixel-like image rendering */
-  .img-pixelated {
-    image-rendering: pixelated;
+  .input-field {
+    @apply border border-border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary/50;
+  }
+  
+  .table-container {
+    @apply overflow-x-auto rounded-md border border-border/50;
+  }
+  
+  .data-table {
+    @apply min-w-full divide-y divide-border;
+  }
+  
+  .data-table th {
+    @apply px-6 py-3 bg-muted text-left text-xs font-medium text-muted-foreground uppercase tracking-wider;
+  }
+  
+  .data-table td {
+    @apply px-6 py-4 whitespace-nowrap text-sm;
+  }
+  
+  .data-table tr {
+    @apply border-b border-border/50 hover:bg-muted/50;
   }
 }
 
-/* Classic scrollbar design */
+/* Language selector styles */
+.language-selector {
+  @apply relative inline-block;
+}
+
+.language-menu {
+  @apply absolute right-0 mt-2 w-40 rounded-md shadow-medium bg-white dark:bg-dark-card border border-border/50 overflow-hidden z-50;
+}
+
+.language-option {
+  @apply px-4 py-2 text-sm hover:bg-muted/50 cursor-pointer flex items-center gap-2;
+}
+
+.top-navbar {
+  @apply sticky top-0 z-50 bg-white dark:bg-dark-bg border-b border-border/50 shadow-sm;
+}
+
+/* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 16px;
-  height: 16px;
+  @apply w-2;
 }
 
 ::-webkit-scrollbar-track {
-  background: #c0c0c0;
-  border-left: 1px solid #808080;
+  @apply bg-muted rounded-full;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d3d3d3;
-  border: 1px outset #808080;
-  border-right: none;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a0a0a0;
-}
-
-/* Styles for progress bars and other elements to look more 90s-like */
-.progress-90s {
-  border: 2px inset #808080;
-  background: white;
-}
-
-.progress-90s::-webkit-progress-value {
-  background: #0000aa;
-}
-
-/* Classic table styles */
-.table-90s {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.table-90s th {
-  background-color: #d3d3d3;
-  border: 1px solid #808080;
-  font-weight: bold;
-}
-
-.table-90s td {
-  border: 1px solid #808080;
-  background-color: white;
-}
-
-/* Menu bar styling */
-.menubar-90s {
-  background-color: #d3d3d3;
-  border-bottom: 1px solid #808080;
-}
-
-.menubar-90s-item {
-  padding: 2px 8px;
-  cursor: pointer;
-}
-
-.menubar-90s-item:hover {
-  background-color: #0000aa;
-  color: white;
+  @apply bg-primary/50 rounded-full hover:bg-primary;
 }
