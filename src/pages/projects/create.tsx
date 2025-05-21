@@ -68,10 +68,10 @@ export default function CreateProject() {
       const newProject = {
         id: generateId(),
         name: values.name,
-        numWorkers: values.numWorkers,
-        totalDistance: values.totalDistance,
-        createdBy: user.id,
-        createdAt: new Date().toISOString(),
+        num_workers: values.numWorkers,
+        total_distance: values.totalDistance,
+        created_by: user.id,
+        created_at: new Date().toISOString(),
         status: "active" as const,
       };
 

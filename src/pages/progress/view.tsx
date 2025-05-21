@@ -31,13 +31,13 @@ export default function ViewProgress() {
       setProject(projectData);
       setProgressEntries(entries);
       
-      // Calculate total progress if project has totalDistance
-      if (projectData.totalDistance) {
+      // Calculate total progress if project has total_distance
+      if (projectData.total_distance) {
         const totalCompleted = entries.reduce(
           (sum, entry) => sum + (entry.distanceCompleted || 0), 
           0
         );
-        setTotalProgress(Math.min(100, (totalCompleted / projectData.totalDistance) * 100));
+        setTotalProgress(Math.min(100, (totalCompleted / projectData.total_distance) * 100));
       }
     }
     
@@ -74,7 +74,7 @@ export default function ViewProgress() {
             View all progress updates for this project
           </p>
           
-          {project.totalDistance && (
+          {project.total_distance && (
             <div className="mt-6">
               <div className="flex justify-between mb-1 items-center">
                 <h2 className="text-xl font-semibold">Overall Progress</h2>

@@ -86,7 +86,7 @@ export default function ProjectDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-muted-foreground">Number of Workers</p>
-                <p className="text-xl font-medium">{project.numWorkers}</p>
+                <p className="text-xl font-medium">{project.num_workers}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Status</p>
@@ -94,12 +94,12 @@ export default function ProjectDetails() {
               </div>
               <div>
                 <p className="text-muted-foreground">Created By</p>
-                <p className="text-xl font-medium">{project.createdBy}</p>
+                <p className="text-xl font-medium">{project.created_by}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Created At</p>
                 <p className="text-xl font-medium">
-                  {new Date(project.createdAt).toLocaleDateString()}
+                  {new Date(project.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>

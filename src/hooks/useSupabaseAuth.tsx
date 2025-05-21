@@ -3,6 +3,7 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -14,6 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string, fullName: string, role: UserRole) => Promise<{ error: any }>;
+  isLoading: boolean; // Added missing property
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,7 +27,8 @@ const AuthContext = createContext<AuthContextType>({
   refreshUser: async () => {},
   login: async () => ({ error: null }),
   logout: async () => {},
-  signup: async () => ({ error: null })
+  signup: async () => ({ error: null }),
+  isLoading: true // Added missing property
 });
 
 export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -163,7 +166,8 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
       setUser(null);
       navigate('/login');
     },
-    signup
+    signup,
+    isLoading: loading // Add missing property
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -173,7 +177,3 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
 export const useSupabaseAuth = () => useContext(AuthContext);
 
 // For toast notifications
-const toast = (props: { title: string; description: string; variant?: "default" | "destructive" }) => {
-  console.log(`${props.title}: ${props.description}`);
-  // In a real implementation, this would use the toast system
-};

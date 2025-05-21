@@ -16,8 +16,7 @@ export async function generateDocx(options: GenerateDocxOptions): Promise<Blob> 
   try {
     const { 
       Document, Paragraph, TextRun, HeadingLevel, Table,
-      TableRow, TableCell, BorderStyle, WidthType, AlignmentType,
-      TableOfContents, PageBreak
+      TableRow, TableCell, BorderStyle, WidthType, AlignmentType
     } = docx;
 
     // Create basic document structure (simplified for demo)

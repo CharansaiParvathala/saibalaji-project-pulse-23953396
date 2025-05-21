@@ -21,29 +21,29 @@ export const generateDemoData = () => {
     {
       id: "proj1",
       name: "Highway Extension",
-      numWorkers: 25,
-      createdBy: "user1",
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+      num_workers: 25,
+      created_by: "user1",
+      created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
       status: "active",
-      totalDistance: 10000
+      total_distance: 10000
     },
     {
       id: "proj2",
       name: "Bridge Construction",
-      numWorkers: 40,
-      createdBy: "user2",
-      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+      num_workers: 40,
+      created_by: "user2",
+      created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
       status: "active",
-      totalDistance: 5000
+      total_distance: 5000
     },
     {
       id: "proj3",
       name: "Road Maintenance",
-      numWorkers: 15,
-      createdBy: "user3",
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
+      num_workers: 15,
+      created_by: "user3",
+      created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
       status: "completed",
-      totalDistance: 8000
+      total_distance: 8000
     }
   ];
   
@@ -80,30 +80,32 @@ export const generateDemoData = () => {
     {
       id: "veh1",
       model: "Tata Truck 407",
-      registrationNumber: "MH02 AB1234",
+      registration_number: "MH02 AB1234",
       type: "truck",
-      pollutionCertificate: {
+      pollution_certificate: {
         number: "POL123456",
         expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
       },
-      fitnessCertificate: {
+      fitness_certificate: {
         number: "FIT789012",
         expiryDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
       },
+      created_at: new Date().toISOString()
     },
     {
       id: "veh2",
       model: "JCB Excavator",
-      registrationNumber: "MH04 CD5678",
+      registration_number: "MH04 CD5678",
       type: "truck",
-      pollutionCertificate: {
+      pollution_certificate: {
         number: "POL789012",
         expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       },
-      fitnessCertificate: {
+      fitness_certificate: {
         number: "FIT345678",
         expiryDate: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString(),
       },
+      created_at: new Date().toISOString()
     }
   ];
   
@@ -145,7 +147,10 @@ export const generateDemoData = () => {
           status: Math.random() > 0.7 ? "submitted" : "locked",
           isLocked: Math.random() > 0.7,
           distanceCompleted: randomBetween(100, 500),
-          timeSpent: randomBetween(2, 8)
+          timeSpent: randomBetween(2, 8),
+          workersPresent: randomBetween(5, 20),
+          notes: "Progress note for day " + i,
+          createdBy: users[randomBetween(0, users.length - 1)].id
         };
         
         // Add some payment requests associated with this entry
@@ -159,9 +164,13 @@ export const generateDemoData = () => {
             requestedDate.setHours(randomBetween(8, 17));
             
             const purposesList = [];
+            const purposeCosts: Record<string, number> = {};
+            
             const numPurposes = randomBetween(1, 3);
             for (let k = 0; k < numPurposes; k++) {
-              purposesList.push(purposes[randomBetween(0, purposes.length - 1)]);
+              const purpose = purposes[randomBetween(0, purposes.length - 1)];
+              purposesList.push(purpose);
+              purposeCosts[purpose] = randomBetween(500, 2000);
             }
             
             const paymentId = generateId();
@@ -174,6 +183,7 @@ export const generateDemoData = () => {
               id: paymentId,
               projectId: project.id,
               purposes: Array.from(new Set(purposesList)) as any, // Remove duplicates
+              purposeCosts: purposeCosts as Record<PaymentPurpose, number>,
               amount: Math.floor(Math.random() * 10000) + 500,
               description: `Payment for ${purposesList.join(", ")}`,
               photos: [
@@ -187,22 +197,22 @@ export const generateDemoData = () => {
                 }
               ],
               status: paymentStatus,
-              requestedBy: entry.submittedBy,
+              requestedBy: entry.submittedBy || users[0].id,
               requestedAt: requestedDate.toISOString(),
               reviewedBy: paymentStatus !== "pending" ? users[randomBetween(0, users.length - 1)].id : undefined,
               reviewedAt: paymentStatus !== "pending" ? new Date(requestedDate.getTime() + randomBetween(1, 48) * 60 * 60 * 1000).toISOString() : undefined,
               comments: paymentStatus === "rejected" ? "Insufficient documentation provided" : undefined,
               statusHistory: [{
                 status: "pending",
-                changedBy: entry.submittedBy,
+                changedBy: entry.submittedBy || users[0].id,
                 changedAt: requestedDate.toISOString(),
               }]
             };
             
             // Add status history based on current status
             if (paymentStatus !== "pending") {
-              payment.statusHistory.push({
-                status: paymentStatus,
+              payment.statusHistory!.push({
+                status: paymentStatus as any,
                 changedBy: payment.reviewedBy || "system",
                 changedAt: payment.reviewedAt || new Date().toISOString(),
                 comments: payment.comments
@@ -210,7 +220,7 @@ export const generateDemoData = () => {
             }
             
             paymentRequests.push(payment);
-            entry.paymentRequests.push(paymentId);
+            entry.paymentRequests!.push(paymentId);
           }
         }
         

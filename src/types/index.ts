@@ -19,6 +19,12 @@ export interface Project {
   created_at: string;
   num_workers: number;
   total_distance: number;
+  
+  // For compatibility with existing code, add aliases
+  numWorkers?: number;
+  totalDistance?: number;
+  createdBy?: string;
+  createdAt?: string;
 }
 
 // Progress related types
@@ -135,6 +141,11 @@ export interface Vehicle {
   fitness_certificate?: any;
   additional_details?: any;
   created_at: string;
+  
+  // For compatibility with existing code, add aliases
+  registrationNumber?: string;
+  pollutionCertificate?: any;
+  fitnessCertificate?: any;
 }
 
 export interface Driver {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -26,7 +25,7 @@ export default function Projects({ showProgressButton = false }: ProjectsProps) 
       const allProjects = getProjects();
       const visibleProjects = user?.role === "admin"
         ? allProjects
-        : allProjects.filter(project => project.createdBy === user?.id);
+        : allProjects.filter(project => project.created_by === user?.id);
       
       setProjects(visibleProjects);
 
@@ -36,13 +35,13 @@ export default function Projects({ showProgressButton = false }: ProjectsProps) 
       // Calculate progress for each project
       const progress: Record<string, number> = {};
       visibleProjects.forEach(project => {
-        if (project.totalDistance) {
+        if (project.total_distance) {
           const projectEntries = progressEntries.filter(entry => entry.projectId === project.id);
           const totalCompletedDistance = projectEntries.reduce(
             (sum, entry) => sum + (entry.distanceCompleted || 0),
             0
           );
-          progress[project.id] = Math.min(100, (totalCompletedDistance / project.totalDistance) * 100);
+          progress[project.id] = Math.min(100, (totalCompletedDistance / project.total_distance) * 100);
         } else {
           progress[project.id] = 0;
         }
@@ -105,14 +104,14 @@ export default function Projects({ showProgressButton = false }: ProjectsProps) 
                   <div className="p-6">
                     <h3 className="font-semibold text-lg mb-2">{project.name}</h3>
                     <div className="text-sm text-muted-foreground mb-2">
-                      <p>Workers: {project.numWorkers}</p>
+                      <p>Workers: {project.num_workers}</p>
                       <p>Status: {project.status.charAt(0).toUpperCase() + project.status.slice(1)}</p>
-                      {project.totalDistance !== undefined && (
-                        <p>Total Distance: {project.totalDistance} meters</p>
+                      {project.total_distance !== undefined && (
+                        <p>Total Distance: {project.total_distance} meters</p>
                       )}
                     </div>
                     
-                    {project.totalDistance !== undefined && (
+                    {project.total_distance !== undefined && (
                       <div className="mt-3">
                         <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
                           <div 
