@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  created_at?: string;
 }
 
 // Project related types
@@ -14,10 +15,10 @@ export interface Project {
   id: string;
   name: string;
   status: string;
-  createdBy: string;
-  createdAt: string;
-  numWorkers: number;
-  totalDistance: number;
+  created_by: string;
+  created_at: string;
+  num_workers: number;
+  total_distance: number;
 }
 
 // Progress related types
@@ -57,6 +58,10 @@ export interface ProgressEntry {
     driverId: string;
     [key: string]: any;
   };
+  userName?: string;
+  projectName?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
 }
 
 // Payment request types

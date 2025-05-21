@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ClassicLayout } from "@/components/ClassicLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Download, Upload, FileArchive, Trash2, AlertTriangle, Link } from "lucide-react";
-import { generateDataReport, downloadReport } from "@/lib/documentGenerator";
-import { useToast } from "@/hooks/use-toast"; // Updated import
+import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
+import { generateDataReport, downloadReport } from "@/lib/documentGenerator";
 
-// Mock data for storage usage and backup links - in a real app these would come from Supabase
+// Mock data for storage usage and backup links
 const MOCK_STORAGE = {
   totalBytes: 250 * 1024 * 1024, // 250 MB
   maxBytes: 500 * 1024 * 1024, // 500 MB
@@ -52,8 +51,8 @@ export default function BackupPage() {
     max: MOCK_STORAGE.maxBytes
   });
   
-  const { toast } = useToast(); // Fixed toast usage
-  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  const { user } = useAuth();
   
   // Generate and download report
   const handleGenerateReport = async () => {

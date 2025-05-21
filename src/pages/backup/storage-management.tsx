@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import {
@@ -38,14 +37,7 @@ import { generateDocx } from "@/lib/documentGenerator";
 import { 
   Save, Database, DownloadCloud, AlertTriangle, Trash2, HardDrive
 } from "lucide-react";
-
-interface StorageMetrics {
-  id: string;
-  total_size: number;
-  used_size: number;
-  percentage_used: number;
-  last_updated: string;
-}
+import { StorageMetrics } from "@/types";
 
 export default function StorageManagementPage() {
   const { toast } = useToast();
