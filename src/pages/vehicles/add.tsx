@@ -1,271 +1,180 @@
+import React, { useState } from 'react';
+import { Layout } from '@/components/Layout';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/hooks/useAuth';
+import { generateId, saveVehicle } from '@/lib/storage';
+import { VehicleType } from '@/types';
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/Layout";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { generateId, saveVehicle } from "@/lib/storage";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const vehicleSchema = z.object({
-  model: z.string().min(2, "Model is required"),
-  registrationNumber: z.string().min(3, "Registration number is required"),
-  type: z.enum(["truck", "car", "bike"], { required_error: "Vehicle type is required" }),
-  pollutionCertificateNumber: z.string().min(3, "Pollution certificate number is required"),
-  pollutionExpiryDate: z.string().refine(val => !!val, "Expiry date is required"),
-  fitnessCertificateNumber: z.string().min(3, "Fitness certificate number is required"),
-  fitnessExpiryDate: z.string().refine(val => !!val, "Expiry date is required"),
-  additionalDetails: z.string().optional(),
-});
-
-type VehicleFormValues = z.infer<typeof vehicleSchema>;
-
-export default function AddVehicle() {
-  const navigate = useNavigate();
+export default function AddVehiclePage() {
   const { toast } = useToast();
-  
-  const form = useForm<VehicleFormValues>({
-    resolver: zodResolver(vehicleSchema),
-    defaultValues: {
-      model: "",
-      registrationNumber: "",
-      type: "truck",
-      pollutionCertificateNumber: "",
-      pollutionExpiryDate: new Date().toISOString().split('T')[0],
-      fitnessCertificateNumber: "",
-      fitnessExpiryDate: new Date().toISOString().split('T')[0],
-      additionalDetails: "",
-    },
-  });
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const onSubmit = (values: VehicleFormValues) => {
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [manufacturer, setManufacturer] = useState('');
+  const [model, setModel] = useState('');
+  const [vehicleType, setVehicleType] = useState<VehicleType | ''>('');
+  const [yearManufactured, setYearManufactured] = useState<number | undefined>(undefined);
+  const [lastServiceDate, setLastServiceDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleAddVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!vehicleNumber || !manufacturer || !model || !vehicleType) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
-      const vehicle: Vehicle = {
-        id: generateId(),
-        model: values.model,
-        registration_number: values.registrationNumber,
-        type: values.type,
-        pollution_certificate: {
-          number: values.pollutionCertificateNumber,
-          expiryDate: values.pollutionExpiryDate,
-        },
-        fitness_certificate: {
-          number: values.fitnessCertificateNumber,
-          expiryDate: values.fitnessExpiryDate,
-        },
-        additional_details: values.additionalDetails ? { notes: values.additionalDetails } : undefined,
-        created_at: new Date().toISOString()
+      const newVehicleId = generateId();
+      
+      // For local storage
+      const newVehicle = {
+        id: newVehicleId,
+        vehicle_number: vehicleNumber,
+        manufacturer,
+        model,
+        vehicle_type: vehicleType,
+        year_manufactured: yearManufactured || new Date().getFullYear(),
+        last_service_date: lastServiceDate || '',
+        is_active: true,
+        created_at: new Date().toISOString(),
+        created_by: user?.id || ''
       };
       
-      saveVehicle(vehicle);
+      // Save to local storage
+      saveVehicle(newVehicle);
+      
+      // Also save to Supabase
+      const { error } = await supabase.from('vehicles').insert([{
+        id: newVehicleId,
+        vehicle_number: vehicleNumber,
+        manufacturer,
+        model,
+        vehicle_type: vehicleType,
+        year_manufactured: yearManufactured || new Date().getFullYear(),
+        last_service_date: lastServiceDate || null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        created_by: user?.id || null
+      }]);
+      
+      if (error) throw error;
       
       toast({
         title: "Vehicle Added",
-        description: "The vehicle has been added to the registry",
+        description: "The vehicle has been added successfully.",
       });
       
-      navigate("/vehicles");
-    } catch (error) {
+      navigate('/vehicles');
+    } catch (error: any) {
       console.error("Error adding vehicle:", error);
       toast({
         title: "Error",
-        description: "Failed to add vehicle",
+        description: error.message || "Failed to add vehicle. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Layout requiredRoles={["admin"]}>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Add Vehicle</h1>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vehicle Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="model"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Model</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Toyota Hilux" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+    <Layout requiredRoles={["admin", "owner"]}>
+      <div className="container max-w-2xl mx-auto mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Vehicle</CardTitle>
+            <CardDescription>Add a new vehicle to the system</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleAddVehicle} className="space-y-4">
+              <div>
+                <Label htmlFor="vehicleNumber">Vehicle Number</Label>
+                <Input
+                  type="text"
+                  id="vehicleNumber"
+                  value={vehicleNumber}
+                  onChange={(e) => setVehicleNumber(e.target.value)}
+                  required
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="registrationNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Registration Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. KA01AB1234" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div>
+                <Label htmlFor="manufacturer">Manufacturer</Label>
+                <Input
+                  type="text"
+                  id="manufacturer"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  required
                 />
-
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select vehicle type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="truck">Truck</SelectItem>
-                          <SelectItem value="car">Car</SelectItem>
-                          <SelectItem value="bike">Bike</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div>
+                <Label htmlFor="model">Model</Label>
+                <Input
+                  type="text"
+                  id="model"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  required
                 />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Pollution Certificate</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="pollutionCertificateNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Certificate Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. PUCC123456" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div>
+                <Label htmlFor="vehicleType">Vehicle Type</Label>
+                <Select onValueChange={(value) => setVehicleType(value as VehicleType)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="truck">Truck</SelectItem>
+                    <SelectItem value="car">Car</SelectItem>
+                    <SelectItem value="bike">Bike</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="yearManufactured">Year Manufactured</Label>
+                <Input
+                  type="number"
+                  id="yearManufactured"
+                  value={yearManufactured}
+                  onChange={(e) => setYearManufactured(Number(e.target.value))}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="pollutionExpiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div>
+                <Label htmlFor="lastServiceDate">Last Service Date</Label>
+                <Input
+                  type="date"
+                  id="lastServiceDate"
+                  value={lastServiceDate}
+                  onChange={(e) => setLastServiceDate(e.target.value)}
                 />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Fitness Certificate</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fitnessCertificateNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Certificate Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. FC123456" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="fitnessExpiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="additionalDetails"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <textarea
-                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          placeholder="Any additional details about the vehicle"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/vehicles")}>
-                Cancel
+              </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Adding..." : "Add Vehicle"}
               </Button>
-              <Button type="submit">
-                Add Vehicle
-              </Button>
-            </div>
-          </form>
-        </Form>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" onClick={() => navigate('/vehicles')}>
+              Cancel
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </Layout>
   );

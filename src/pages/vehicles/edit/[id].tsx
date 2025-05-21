@@ -1,14 +1,17 @@
-
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { getVehicle, updateVehicle } from "@/lib/storage";
-import { Vehicle } from "@/types";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Layout } from '@/components/Layout';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/hooks/useAuth';
+import { getVehicle, updateVehicle } from '@/lib/storage';
+import { Separator } from '@/components/ui/separator';
+import { VehicleType } from '@/types';
 
 export default function EditVehicle() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +28,7 @@ export default function EditVehicle() {
   const [pollutionExpiry, setPollutionExpiry] = useState("");
   const [fitnessNumber, setFitnessNumber] = useState("");
   const [fitnessExpiry, setFitnessExpiry] = useState("");
+  const [vehicleType, setVehicleType] = useState<VehicleType>("truck");
   
   useEffect(() => {
     if (!id) return;
@@ -87,6 +91,10 @@ export default function EditVehicle() {
       toast.error("Failed to update vehicle");
       setSaving(false);
     }
+  };
+
+  const handleSelectChange = (value: VehicleType) => {
+    setVehicleType(value);
   };
 
   if (loading) {
@@ -207,6 +215,24 @@ export default function EditVehicle() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Vehicle Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select onValueChange={handleSelectChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a vehicle type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="truck">Truck</SelectItem>
+                  <SelectItem value="car">Car</SelectItem>
+                  <SelectItem value="bike">Bike</SelectItem>
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
           

@@ -33,7 +33,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { generateDocx } from "@/lib/documentGenerator";
+import { generateWordReport } from "@/lib/documentGenerator";
 import { 
   Save, Database, DownloadCloud, AlertTriangle, Trash2, HardDrive
 } from "lucide-react";
@@ -140,7 +140,7 @@ export default function StorageManagementPage() {
       const paymentRequests = paymentsResponse.data || [];
       
       // Generate document
-      const docBlob = await generateDocx({
+      const docBlob = await generateWordReport({
         title: documentName,
         projects,
         progressEntries,

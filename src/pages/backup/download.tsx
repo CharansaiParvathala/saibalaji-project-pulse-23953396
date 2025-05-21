@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Layout } from "@/components/Layout";
@@ -21,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { generateReport, downloadReport } from "@/lib/documentGenerator";
 import { Project, ProgressEntry, PaymentRequest } from "@/types";
-import { getFromStorage } from "@/lib/storage";
+import { getFromStorage, STORAGE_KEYS } from "@/lib/storage";
 
 export default function BackupDownloadPage() {
   const { t } = useTranslation();
@@ -44,13 +43,13 @@ export default function BackupDownloadPage() {
     
     try {
       // Load data from storage
-      const projects = getFromStorage<Project[]>("sai-balaji-projects") || [];
+      const projects = getFromStorage<Project[]>(STORAGE_KEYS.PROJECTS) || [];
       setProgress(30);
       
-      const progressEntries = getFromStorage<ProgressEntry[]>("sai-balaji-progress-entries") || [];
+      const progressEntries = getFromStorage<ProgressEntry[]>(STORAGE_KEYS.PROGRESS_ENTRIES) || [];
       setProgress(50);
       
-      const paymentRequests = getFromStorage<PaymentRequest[]>("sai-balaji-payment-requests") || [];
+      const paymentRequests = getFromStorage<PaymentRequest[]>(STORAGE_KEYS.PAYMENT_REQUESTS) || [];
       setProgress(70);
       
       // Filter data based on selections
