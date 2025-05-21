@@ -39,7 +39,7 @@ export type VehicleType = "truck" | "car" | "bike";
 
 export interface Vehicle {
   id: string;
-  vehicle_number: string;  // For backward compatibility
+  vehicle_number: string;  // Required for backward compatibility
   manufacturer: string;
   model: string;
   vehicle_type: VehicleType;
@@ -103,7 +103,7 @@ export interface ProgressEntry {
   reviewedAt?: string;
   projectName?: string;  // Added for display purposes
   userName?: string;     // Added for display purposes
-  vehicleUsed?: boolean; // Added for tracking vehicle usage
+  vehicleUsed?: boolean | any; // Added for tracking vehicle usage
   correctionRequest?: { message: string; requestedBy: string; requestedAt: string };
   
   // For backward compatibility
@@ -120,7 +120,14 @@ export interface ProgressEntry {
   reviewed_at?: string;
   project_name?: string;
   user_name?: string;
-  vehicle_used?: boolean;
+  vehicle_used?: boolean | any;
+  externalDriver?: string;
+  vehicleId?: string;
+  driverId?: string;
+  meterReadings?: {
+    start?: Photo;
+    end?: Photo;
+  };
 }
 
 // Photo interface for handling images with metadata

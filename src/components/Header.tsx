@@ -7,8 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { 
-  Building2, Menu, X, LogOut, User, Bell, ChevronDown, Search, 
-  ShoppingCart, MapPin, Package, BarChart4, Users, Truck
+  Building2, Menu, X, LogOut, User, Bell, ChevronDown, Search,
+  MapPin, Package, BarChart4, Users, Truck, Star, Grid, FileText, Calendar
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -35,13 +36,13 @@ export function Header() {
   };
   
   const categories = [
-    { name: t('common.projects'), href: "/projects" },
-    { name: t('common.progress'), href: "/progress" },
-    { name: t('common.payments'), href: "/payments/request" },
-    { name: t('common.statistics'), href: "/statistics" },
-    { name: t('common.vehicles'), href: "/vehicles" },
-    { name: t('common.users'), href: "/users" },
-    { name: t('common.backup'), href: "/backup" },
+    { icon: <FileText size={16} />, name: t('common.projects'), href: "/projects" },
+    { icon: <Calendar size={16} />, name: t('common.progress'), href: "/progress" },
+    { icon: <Star size={16} />, name: t('common.payments'), href: "/payments/request" },
+    { icon: <BarChart4 size={16} />, name: t('common.statistics'), href: "/statistics" },
+    { icon: <Truck size={16} />, name: t('common.vehicles'), href: "/vehicles" },
+    { icon: <Users size={16} />, name: t('common.users'), href: "/users" },
+    { icon: <Package size={16} />, name: t('common.backup'), href: "/backup" },
   ];
   
   return (
@@ -51,7 +52,7 @@ export function Header() {
         <div className="container mx-auto px-2 py-2">
           <div className="flex items-center gap-2">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-1 text-white py-1 px-2 hover:border hover:border-white rounded">
+            <Link to="/" className="flex items-center gap-1 text-white py-1 px-2 hover:border hover:border-white rounded transition-all">
               <Building2 className="h-7 w-7" />
               <span className="font-bold text-xl font-display hidden md:inline">
                 Sai Balaji
@@ -60,7 +61,7 @@ export function Header() {
             
             {/* Delivery location */}
             <div className="amz-nav-item hidden md:flex">
-              <span className="amz-nav-label">{t('common.delivery')}</span>
+              <span className="amz-nav-label">{t('common.location')}</span>
               <div className="flex items-center">
                 <MapPin className="h-4 w-4 mr-1" />
                 <span className="amz-nav-text">India</span>
@@ -76,12 +77,12 @@ export function Header() {
                   <option value="vehicles">{t('common.vehicles')}</option>
                   <option value="users">{t('common.users')}</option>
                 </select>
-                <input 
+                <Input 
                   type="text" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={`${t('common.search')}...`}
-                  className="amz-search-input"
+                  className="amz-search-input flex-1 rounded-none focus:outline-none"
                 />
                 <button type="submit" className="amz-search-button">
                   <Search className="h-5 w-5" />
@@ -111,8 +112,8 @@ export function Header() {
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white">
-                  <div className="px-3 py-2 text-sm font-medium border-b mb-1 text-foreground">
+                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-dark-card shadow-medium">
+                  <div className="px-3 py-2 text-sm font-medium border-b mb-1">
                     {user.name}
                     <p className="text-xs text-muted-foreground font-normal">{user.role}</p>
                   </div>
@@ -136,14 +137,14 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild size="sm" className="bg-primary text-white hover:bg-primary/90">
+              <Button asChild size="sm" className="bg-secondary text-white hover:bg-secondary/90">
                 <Link to="/login">{t('common.login')}</Link>
               </Button>
             )}
             
             {/* Notifications */}
             {user && (
-              <div className="amz-nav-item">
+              <div className="amz-nav-item relative">
                 <NotificationCenter />
               </div>
             )}
@@ -164,7 +165,7 @@ export function Header() {
       </div>
       
       {/* Bottom navigation bar with categories (desktop) */}
-      <div className="bg-primary/90 text-white hidden md:block">
+      <div className="bg-primary/90 text-white hidden md:block border-t border-white/10">
         <div className="container mx-auto px-4">
           <div className="flex items-center py-1 overflow-x-auto">
             {/* Hamburger menu */}
@@ -178,8 +179,9 @@ export function Header() {
               <Link
                 key={category.href}
                 to={category.href}
-                className="px-3 py-1 hover:bg-primary/80 text-sm whitespace-nowrap"
+                className="px-3 py-1 hover:bg-primary/80 text-sm whitespace-nowrap flex items-center gap-1"
               >
+                {category.icon}
                 {category.name}
               </Link>
             ))}
@@ -189,7 +191,7 @@ export function Header() {
       
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b">
+        <div className="md:hidden bg-white dark:bg-dark-card border-b shadow-md fixed inset-0 top-16 z-40 overflow-y-auto">
           <div className="container mx-auto py-3 px-4">
             <div className="space-y-3">
               {user && (
@@ -203,17 +205,31 @@ export function Header() {
                 <Link
                   key={category.href}
                   to={category.href}
-                  className="block px-2 py-2 hover:bg-muted rounded"
+                  className="block px-2 py-3 hover:bg-muted rounded flex items-center"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {category.name}
+                  <div className="rounded-full bg-primary/10 p-2 mr-3">
+                    {category.icon}
+                  </div>
+                  <span>{category.name}</span>
                 </Link>
               ))}
               
-              <div className="flex items-center gap-2 border-t pt-2">
+              <div className="flex items-center gap-2 border-t pt-4 mt-4 justify-between">
                 <LanguageSelector />
                 <ThemeToggle />
               </div>
+              
+              {user && (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => logout()}
+                  className="w-full mt-4"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t('common.logout')}
+                </Button>
+              )}
             </div>
           </div>
         </div>

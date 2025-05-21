@@ -85,7 +85,7 @@
 /* Amazon-inspired Component Styles */
 @layer components {
   .data-card {
-    @apply bg-white rounded-md shadow-soft p-4 border border-border/50 transition-all hover:shadow-medium;
+    @apply bg-white dark:bg-dark-card rounded-md shadow-soft p-4 border border-border/50 transition-all hover:shadow-medium;
   }
   
   .btn-primary {
@@ -126,7 +126,7 @@
   
   /* Amazon-inspired navigation */
   .amz-nav {
-    @apply bg-primary text-white;
+    @apply bg-primary text-white py-2;
   }
   
   .amz-search-bar {
@@ -134,7 +134,7 @@
   }
   
   .amz-search-input {
-    @apply flex-1 rounded-l-md border-0 py-2 px-3 focus:ring-0 focus:outline-none;
+    @apply flex-1 border-0 py-2 px-3 focus:ring-0;
   }
   
   .amz-search-button {
@@ -166,7 +166,36 @@
   }
 
   .amz-product-card {
-    @apply bg-white rounded-sm border border-border/10 shadow-sm hover:shadow-md transition-shadow p-3 flex flex-col;
+    @apply bg-white dark:bg-dark-card rounded-sm border border-border/10 shadow-sm hover:shadow-md transition-shadow p-3 flex flex-col;
+  }
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

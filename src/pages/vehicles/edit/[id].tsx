@@ -1,251 +1,251 @@
-import { useState, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getVehicle, updateVehicle } from '@/lib/storage';
-import { Separator } from '@/components/ui/separator';
-import { VehicleType } from '@/types';
+import { VehicleType, Vehicle } from '@/types';
 
-export default function EditVehicle() {
-  const { id } = useParams<{ id: string }>();
+const EditVehicle = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const { user } = useAuth();
+  
+  const [manufacturer, setManufacturer] = useState('');
+  const [model, setModel] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [vehicleType, setVehicleType] = useState<VehicleType>('truck');
+  const [yearManufactured, setYearManufactured] = useState<number | undefined>();
+  const [lastServiceDate, setLastServiceDate] = useState<string | null | undefined>('');
+  const [additionalDetails, setAdditionalDetails] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  
-  // Form state
-  const [model, setModel] = useState("");
-  const [registrationNumber, setRegistrationNumber] = useState("");
-  const [type, setType] = useState<"truck" | "car" | "bike">("truck");
-  const [pollutionNumber, setPollutionNumber] = useState("");
-  const [pollutionExpiry, setPollutionExpiry] = useState("");
-  const [fitnessNumber, setFitnessNumber] = useState("");
-  const [fitnessExpiry, setFitnessExpiry] = useState("");
-  const [vehicleType, setVehicleType] = useState<VehicleType>("truck");
-  
-  useEffect(() => {
-    if (!id) return;
-    
-    const vehicleData = getVehicle(id);
-    if (vehicleData) {
-      setVehicle(vehicleData);
-      setModel(vehicleData.model);
-      setRegistrationNumber(vehicleData.registrationNumber);
-      setType(vehicleData.type);
-      
-      if (vehicleData.pollutionCertificate) {
-        setPollutionNumber(vehicleData.pollutionCertificate.number);
-        
-        // Format date for input type="date"
-        const pollutionDate = new Date(vehicleData.pollutionCertificate.expiryDate);
-        setPollutionExpiry(pollutionDate.toISOString().split('T')[0]);
-      }
-      
-      if (vehicleData.fitnessCertificate) {
-        setFitnessNumber(vehicleData.fitnessCertificate.number);
-        
-        const fitnessDate = new Date(vehicleData.fitnessCertificate.expiryDate);
-        setFitnessExpiry(fitnessDate.toISOString().split('T')[0]);
-      }
-    }
-    setLoading(false);
-  }, [id]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!id || !vehicle) return;
-    
-    setSaving(true);
-    
-    try {
-      // Create updated vehicle object
-      const updatedVehicle: Vehicle = {
-        ...vehicle,
-        model,
-        registrationNumber,
-        type,
-        pollutionCertificate: {
-          number: pollutionNumber,
-          expiryDate: new Date(pollutionExpiry).toISOString()
-        },
-        fitnessCertificate: {
-          number: fitnessNumber,
-          expiryDate: new Date(fitnessExpiry).toISOString()
+  useEffect(() => {
+    if (id) {
+      const fetchVehicle = async () => {
+        try {
+          const vehicleData = await getVehicle(id);
+          if (vehicleData) {
+            setManufacturer(vehicleData.manufacturer);
+            setModel(vehicleData.model);
+            setVehicleNumber(vehicleData.vehicle_number);
+            setVehicleType(vehicleData.vehicle_type as VehicleType || vehicleData.type as VehicleType);
+            setYearManufactured(vehicleData.year_manufactured);
+            setLastServiceDate(vehicleData.last_service_date);
+            setAdditionalDetails(vehicleData.additional_details || '');
+            setIsActive(vehicleData.is_active);
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching vehicle:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load vehicle details",
+            variant: "destructive"
+          });
+          setLoading(false);
         }
       };
       
-      updateVehicle(updatedVehicle);
+      fetchVehicle();
+    }
+  }, [id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !user) return;
+    
+    try {
+      setSubmitting(true);
       
-      toast.success("Vehicle updated successfully");
-      navigate(`/vehicles/${id}`);
+      const updatedVehicle: Vehicle = {
+        id,
+        manufacturer,
+        model,
+        vehicle_number: vehicleNumber,
+        vehicle_type: vehicleType,
+        year_manufactured: yearManufactured,
+        last_service_date: lastServiceDate,
+        is_active: isActive,
+        created_at: new Date().toISOString(),
+        created_by: user.id,
+        additional_details: additionalDetails || {}
+      };
+      
+      await updateVehicle(id, updatedVehicle);
+      
+      toast({
+        title: "Vehicle Updated",
+        description: "Vehicle details have been updated successfully"
+      });
+      
+      navigate('/vehicles');
     } catch (error) {
       console.error("Error updating vehicle:", error);
-      toast.error("Failed to update vehicle");
-      setSaving(false);
+      toast({
+        title: "Error",
+        description: "Failed to update vehicle details",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
     }
-  };
-
-  const handleSelectChange = (value: VehicleType) => {
-    setVehicleType(value);
   };
 
   if (loading) {
     return (
-      <Layout requiredRoles={["admin"]}>
-        <div className="flex justify-center py-8">
-          <p>Loading vehicle details...</p>
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </Layout>
     );
   }
-
-  if (!vehicle) {
-    return (
-      <Layout requiredRoles={["admin"]}>
-        <div className="flex flex-col items-center justify-center py-8">
-          <h1 className="text-2xl font-bold mb-4">Vehicle Not Found</h1>
-          <p className="text-muted-foreground mb-4">
-            The vehicle you're trying to edit doesn't exist or has been removed.
-          </p>
-          <Button onClick={() => navigate("/vehicles")}>
-            Back to Vehicles
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
-
+  
   return (
-    <Layout requiredRoles={["admin"]}>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Edit Vehicle</h1>
-        
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Vehicle Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="model">Vehicle Model</Label>
-                  <Input
-                    id="model"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="registrationNumber">Registration Number</Label>
-                  <Input
-                    id="registrationNumber"
-                    value={registrationNumber}
-                    onChange={(e) => setRegistrationNumber(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <Layout requiredRoles={['admin']}>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Edit Vehicle Details</h1>
+        <p className="text-muted-foreground">Update information for this vehicle</p>
+      </div>
+      
+      <div className="bg-white dark:bg-dark-card rounded-lg shadow-soft p-6 max-w-3xl">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Vehicle Number */}
+            <div>
+              <Label htmlFor="vehicleNumber">Registration Number</Label>
+              <Input 
+                id="vehicleNumber"
+                type="text"
+                value={vehicleNumber}
+                onChange={(e) => setVehicleNumber(e.target.value)}
+                placeholder="Enter vehicle registration number"
+                required
+              />
+            </div>
+            
+            {/* Vehicle Type */}
+            <div>
+              <Label htmlFor="vehicleType">Vehicle Type</Label>
+              <select
+                id="vehicleType"
+                value={vehicleType}
+                onChange={(e) => setVehicleType(e.target.value as VehicleType)}
+                className="w-full p-2 border border-border rounded-md"
+                required
+              >
+                <option value="truck">Truck</option>
+                <option value="car">Car</option>
+                <option value="bike">Bike</option>
+              </select>
+            </div>
+            
+            {/* Manufacturer */}
+            <div>
+              <Label htmlFor="manufacturer">Manufacturer</Label>
+              <Input 
+                id="manufacturer"
+                type="text"
+                value={manufacturer}
+                onChange={(e) => setManufacturer(e.target.value)}
+                placeholder="Enter manufacturer name"
+                required
+              />
+            </div>
+            
+            {/* Model */}
+            <div>
+              <Label htmlFor="model">Model</Label>
+              <Input 
+                id="model"
+                type="text"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="Enter model name"
+                required
+              />
+            </div>
+            
+            {/* Year Manufactured */}
+            <div>
+              <Label htmlFor="yearManufactured">Year Manufactured</Label>
+              <Input 
+                id="yearManufactured"
+                type="number"
+                min="1900"
+                max={new Date().getFullYear()}
+                value={yearManufactured || ''}
+                onChange={(e) => setYearManufactured(Number(e.target.value) || undefined)}
+                placeholder="Enter year manufactured"
+              />
+            </div>
+            
+            {/* Last Service Date */}
+            <div>
+              <Label htmlFor="lastServiceDate">Last Service Date</Label>
+              <Input 
+                id="lastServiceDate"
+                type="date"
+                value={lastServiceDate || ''}
+                onChange={(e) => setLastServiceDate(e.target.value)}
+              />
+            </div>
+          </div>
           
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Pollution Certificate</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="pollutionNumber">Certificate Number</Label>
-                  <Input
-                    id="pollutionNumber"
-                    value={pollutionNumber}
-                    onChange={(e) => setPollutionNumber(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="pollutionExpiry">Expiry Date</Label>
-                  <Input
-                    id="pollutionExpiry"
-                    type="date"
-                    value={pollutionExpiry}
-                    onChange={(e) => setPollutionExpiry(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Additional Details */}
+          <div>
+            <Label htmlFor="additionalDetails">Additional Details</Label>
+            <Textarea 
+              id="additionalDetails"
+              value={additionalDetails}
+              onChange={(e) => setAdditionalDetails(e.target.value)}
+              placeholder="Enter any additional details about the vehicle"
+              rows={4}
+            />
+          </div>
           
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Fitness Certificate</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="fitnessNumber">Certificate Number</Label>
-                  <Input
-                    id="fitnessNumber"
-                    value={fitnessNumber}
-                    onChange={(e) => setFitnessNumber(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="fitnessExpiry">Expiry Date</Label>
-                  <Input
-                    id="fitnessExpiry"
-                    type="date"
-                    value={fitnessExpiry}
-                    onChange={(e) => setFitnessExpiry(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Is Active */}
+          <div className="flex items-center">
+            <input 
+              id="isActive"
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+            />
+            <Label htmlFor="isActive" className="ml-2">Active</Label>
+          </div>
           
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Vehicle Type</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select onValueChange={handleSelectChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a vehicle type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="truck">Truck</SelectItem>
-                  <SelectItem value="car">Car</SelectItem>
-                  <SelectItem value="bike">Bike</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-end space-x-4 mt-6">
-            <Button type="button" variant="outline" onClick={() => navigate(`/vehicles/${id}`)}>
+          {/* Buttons */}
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/vehicles')}
+              disabled={submitting}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
+            <Button
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting ? 'Updating...' : 'Update Vehicle'}
             </Button>
           </div>
         </form>
       </div>
     </Layout>
   );
-}
+};
+
+export default EditVehicle;
