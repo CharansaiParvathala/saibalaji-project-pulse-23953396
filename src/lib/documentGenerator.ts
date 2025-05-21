@@ -1,6 +1,7 @@
 
 import { saveAs } from 'file-saver';
 import { Project, ProgressEntry, PaymentRequest } from '@/types';
+import * as docx from 'docx';
 
 export interface GenerateDocxOptions {
   title: string;
@@ -13,9 +14,6 @@ export interface GenerateDocxOptions {
 
 export async function generateDocx(options: GenerateDocxOptions): Promise<Blob> {
   try {
-    // Import docx library at runtime
-    const docx = await import('docx');
-    
     const { 
       Document, Paragraph, TextRun, HeadingLevel, Table,
       TableRow, TableCell, BorderStyle, WidthType, AlignmentType,
@@ -66,7 +64,6 @@ export async function generateDocx(options: GenerateDocxOptions): Promise<Blob> 
 export async function generateDataReport(fileName: string): Promise<Blob> {
   try {
     // This is a simplified version that generates a basic report
-    const docx = await import('docx');
     const { Document, Paragraph, HeadingLevel } = docx;
     
     const doc = new Document({

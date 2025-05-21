@@ -58,7 +58,7 @@ export default function Login() {
     name: "",
     terms: "",
   });
-  const { login, signup, isAuthenticated, isLoading } = useSupabaseAuth();
+  const { login, signup, isAuthenticated, loading } = useSupabaseAuth();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   
@@ -134,9 +134,21 @@ export default function Login() {
     
     try {
       console.log("Attempting login with:", email, password);
-      await login(email, password);
-    } catch (error) {
+      const { error } = await login(email, password);
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message || "Please check your credentials",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
       console.error("Login error in component:", error);
+      toast({
+        title: "Login failed",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
   };
   
@@ -149,10 +161,27 @@ export default function Login() {
     
     try {
       console.log("Attempting signup with:", email, password, name, role);
-      await signup(email, password, name, role);
-      setActiveTab("login");
-    } catch (error) {
+      const { error } = await signup(email, password, name, role);
+      if (error) {
+        toast({
+          title: "Signup failed",
+          description: error.message || "Please check your information",
+          variant: "destructive"
+        });
+      } else {
+        setActiveTab("login");
+        toast({
+          title: "Signup successful",
+          description: "Please verify your email before logging in",
+        });
+      }
+    } catch (error: any) {
       console.error("Signup error in component:", error);
+      toast({
+        title: "Signup failed",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
   };
 
@@ -305,9 +334,9 @@ export default function Login() {
                     <Button 
                       type="submit" 
                       className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
-                      disabled={isLoading}
+                      disabled={loading}
                     >
-                      {isLoading ? (
+                      {loading ? (
                         <div className="flex items-center">
                           <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -418,9 +447,9 @@ export default function Login() {
                     <Button 
                       type="submit" 
                       className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
-                      disabled={isLoading}
+                      disabled={loading}
                     >
-                      {isLoading ? (
+                      {loading ? (
                         <div className="flex items-center">
                           <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

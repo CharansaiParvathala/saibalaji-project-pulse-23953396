@@ -41,27 +41,45 @@ export interface GeoLocation {
 export interface ProgressEntry {
   id: string;
   projectId: string;
+  project_id?: string; // Added for database compatibility
   date: string;
   photos: Photo[];
   distanceCompleted: number;
+  distance_completed?: number; // Added for database compatibility
   timeSpent: number;
+  time_spent?: number; // Added for database compatibility
   workersPresent: number;
+  workers_present?: number; // Added for database compatibility
   notes: string;
   status: string;
   createdBy: string;
+  created_by?: string; // Added for database compatibility
   submittedBy?: string;
+  submitted_by?: string; // Added for database compatibility
   submittedAt?: string;
+  submitted_at?: string; // Added for database compatibility
   isLocked: boolean;
+  is_locked?: boolean; // Added for database compatibility
   paymentRequests?: string[];
+  payment_requests?: string[]; // Added for database compatibility
   vehicleUsed?: {
     vehicleId: string;
     driverId: string;
     [key: string]: any;
   };
+  vehicle_used?: {
+    vehicleId: string;
+    driverId: string;
+    [key: string]: any;
+  }; // Added for database compatibility
   userName?: string;
+  user_name?: string; // Added for database compatibility
   projectName?: string;
+  project_name?: string; // Added for database compatibility
   reviewedBy?: string;
+  reviewed_by?: string; // Added for database compatibility
   reviewedAt?: string;
+  reviewed_at?: string; // Added for database compatibility
 }
 
 // Payment request types
@@ -70,20 +88,29 @@ export type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | 
 export interface PaymentRequest {
   id: string;
   projectId: string;
+  project_id?: string; // Added for database compatibility
   amount: number;
   description: string;
   purposes: PaymentPurpose[];
   purposeCosts: Record<PaymentPurpose, number>;
+  purpose_costs?: Record<PaymentPurpose, number>; // Added for database compatibility
   photos: Photo[];
   status: "pending" | "approved" | "rejected" | "scheduled" | "paid";
   requestedBy: string;
+  requested_by?: string; // Added for database compatibility
   requestedAt: string;
+  requested_at?: string; // Added for database compatibility
   reviewedBy?: string;
+  reviewed_by?: string; // Added for database compatibility
   reviewedAt?: string;
+  reviewed_at?: string; // Added for database compatibility
   comments?: string;
   statusHistory?: PaymentStatusHistoryItem[];
+  status_history?: PaymentStatusHistoryItem[]; // Added for database compatibility
   scheduledDate?: string;
+  scheduled_date?: string; // Added for database compatibility
   paidDate?: string;
+  paid_date?: string; // Added for database compatibility
   vehicle_used?: boolean;
   vehicle_id?: string;
   driver_id?: string;

@@ -1,28 +1,34 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<{ error: any }>;
+  logout: () => Promise<void>;
+  signup: (email: string, password: string, fullName: string, role: UserRole) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isAuthenticated: false,
   signIn: async () => ({ error: null }),
   signOut: async () => {},
   refreshUser: async () => {},
-  isAuthenticated: false
+  login: async () => ({ error: null }),
+  logout: async () => {},
+  signup: async () => ({ error: null })
 });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -43,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: session.user.id,
             name: profile.full_name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
-            role: profile.role || 'leader'
+            role: profile.role as UserRole || 'leader'
           });
         }
       }
@@ -68,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: session.user.id,
             name: profile.full_name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
-            role: profile.role || 'leader'
+            role: profile.role as UserRole || 'leader'
           });
         }
       } else {
@@ -86,18 +92,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  const login = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const signup = async (email: string, password: string, fullName: string, role: UserRole) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role
+          }
+        }
+      });
+      
+      if (!error) {
+        toast({
+          title: "Sign up successful",
+          description: "Please check your email to verify your account."
+        });
+      }
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const value = {
     user,
     loading,
     isAuthenticated: !!user,
-    signIn: async (email, password) => {
-      try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return { error };
-      } catch (error) {
-        return { error };
-      }
-    },
+    signIn: login,
     signOut: async () => {
       await supabase.auth.signOut();
       setUser(null);
@@ -118,14 +152,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: session.user.id,
             name: profile.full_name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
-            role: profile.role || 'leader'
+            role: profile.role as UserRole || 'leader'
           });
         }
       }
-    }
+    },
+    login,
+    logout: async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+      navigate('/login');
+    },
+    signup
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+// Export the hook
+export const useSupabaseAuth = () => useContext(AuthContext);
+
+// For toast notifications
+const toast = (props: { title: string; description: string; variant?: "default" | "destructive" }) => {
+  console.log(`${props.title}: ${props.description}`);
+  // In a real implementation, this would use the toast system
+};
