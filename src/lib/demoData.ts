@@ -1,6 +1,9 @@
 
 import { generateId } from "./storage";
-import { Project, ProgressEntry, PaymentRequest, User, Vehicle } from "@/types";
+import { Project, ProgressEntry, PaymentRequest, User, Vehicle, Driver } from "@/types";
+
+// Types for demo data
+type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
 
 // Generate demo data for statistics and testing
 export const generateDemoData = () => {

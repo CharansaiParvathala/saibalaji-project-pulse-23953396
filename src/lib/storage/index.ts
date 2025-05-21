@@ -1,11 +1,11 @@
 
 // Main storage module that re-exports all storage functions
-import { generateId } from './utils';
+import { generateId, getFromStorage, saveToStorage } from './utils';
 import {
   getUsers, saveUser, updateUser,
   getProjects, getProject, saveProject, updateProject,
   getVehicles, getVehicle, saveVehicle, updateVehicle,
-  getDrivers, getDriver, saveDriver,
+  getDrivers, getDriver, saveDriver, updateDriver,
   getProgressEntries, getProgressEntry, saveProgressEntry, updateProgressEntry,
   getPaymentRequests, getPaymentRequestsByStatus, savePaymentRequest, updatePaymentRequest,
   getNotifications, getNotificationsByUser, saveNotification, markNotificationAsRead
@@ -14,6 +14,8 @@ import {
 export {
   // Utils
   generateId,
+  getFromStorage,
+  saveToStorage,
   
   // User operations
   getUsers,
@@ -36,6 +38,7 @@ export {
   getDrivers,
   getDriver,
   saveDriver,
+  updateDriver,
   
   // Progress operations
   getProgressEntries,

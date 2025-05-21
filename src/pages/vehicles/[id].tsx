@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -71,7 +70,7 @@ export default function VehicleDetails() {
           <div>
             <h1 className="text-3xl font-bold">{vehicle.model}</h1>
             <p className="text-muted-foreground">
-              Registration: {vehicle.registrationNumber}
+              Registration: {vehicle.registration_number}
             </p>
           </div>
           
@@ -101,16 +100,16 @@ export default function VehicleDetails() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Registration Number</p>
-                  <p className="text-xl font-medium">{vehicle.registrationNumber}</p>
+                  <p className="text-xl font-medium">{vehicle.registration_number}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Type</p>
                   <p className="text-xl font-medium">{vehicle.type}</p>
                 </div>
-                {vehicle.additionalDetails && Object.entries(vehicle.additionalDetails).map(([key, value]) => (
+                {vehicle.additional_details && Object.entries(vehicle.additional_details).map(([key, value]) => (
                   <div key={key}>
                     <p className="text-sm text-muted-foreground">{key}</p>
-                    <p className="text-xl font-medium">{value}</p>
+                    <p className="text-xl font-medium">{String(value)}</p>
                   </div>
                 ))}
               </div>

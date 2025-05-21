@@ -61,20 +61,21 @@ export default function AddVehicle() {
 
   const onSubmit = (values: VehicleFormValues) => {
     try {
-      const vehicle = {
+      const vehicle: Vehicle = {
         id: generateId(),
         model: values.model,
-        registrationNumber: values.registrationNumber,
+        registration_number: values.registrationNumber,
         type: values.type,
-        pollutionCertificate: {
+        pollution_certificate: {
           number: values.pollutionCertificateNumber,
           expiryDate: values.pollutionExpiryDate,
         },
-        fitnessCertificate: {
+        fitness_certificate: {
           number: values.fitnessCertificateNumber,
           expiryDate: values.fitnessExpiryDate,
         },
-        additionalDetails: values.additionalDetails ? { notes: values.additionalDetails } : undefined,
+        additional_details: values.additionalDetails ? { notes: values.additionalDetails } : undefined,
+        created_at: new Date().toISOString()
       };
       
       saveVehicle(vehicle);

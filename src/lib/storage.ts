@@ -1,8 +1,20 @@
 
-import { User, Project, Vehicle, Driver, ProgressEntry, PaymentRequest, Notification } from "@/types";
+// Re-export from new storage structure to maintain backward compatibility
+// This file should eventually be deprecated once all code is migrated to the new structure
+
+import { 
+  generateId, getFromStorage, saveToStorage,
+  getUsers, saveUser, updateUser,
+  getProjects, getProject, saveProject, updateProject,
+  getVehicles, getVehicle, saveVehicle, updateVehicle,
+  getDrivers, getDriver, saveDriver, updateDriver,
+  getProgressEntries, getProgressEntry, saveProgressEntry, updateProgressEntry,
+  getPaymentRequests, getPaymentRequestsByStatus, savePaymentRequest, updatePaymentRequest,
+  getNotifications, getNotificationsByUser, saveNotification, markNotificationAsRead
+} from './storage/index';
 
 // Local Storage keys
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   USERS: "sai-balaji-users",
   PROJECTS: "sai-balaji-projects",
   VEHICLES: "sai-balaji-vehicles",
@@ -12,240 +24,50 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: "sai-balaji-notifications",
 };
 
-// Helper to generate IDs
-export const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+export {
+  // Utils
+  generateId,
+  getFromStorage,
+  saveToStorage,
+  
+  // User operations
+  getUsers,
+  saveUser,
+  updateUser,
+  
+  // Project operations
+  getProjects,
+  getProject,
+  saveProject,
+  updateProject,
+  
+  // Vehicle operations
+  getVehicles,
+  getVehicle,
+  saveVehicle,
+  updateVehicle,
+  
+  // Driver operations
+  getDrivers,
+  getDriver,
+  saveDriver,
+  updateDriver,
+  
+  // Progress operations
+  getProgressEntries,
+  getProgressEntry,
+  saveProgressEntry,
+  updateProgressEntry,
+  
+  // Payment operations
+  getPaymentRequests,
+  getPaymentRequestsByStatus,
+  savePaymentRequest,
+  updatePaymentRequest,
+  
+  // Notification operations
+  getNotifications,
+  getNotificationsByUser,
+  saveNotification,
+  markNotificationAsRead
 };
-
-// Generic storage functions
-function getFromStorage<T>(key: string): T[] {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : [];
-}
-
-function saveToStorage<T>(key: string, data: T[]): void {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-// Users
-export function getUsers(): User[] {
-  return getFromStorage<User>(STORAGE_KEYS.USERS);
-}
-
-export function saveUser(user: User): User {
-  const users = getUsers();
-  users.push(user);
-  saveToStorage(STORAGE_KEYS.USERS, users);
-  return user;
-}
-
-export function updateUser(updatedUser: User): User {
-  const users = getUsers();
-  const index = users.findIndex((user) => user.id === updatedUser.id);
-  
-  if (index !== -1) {
-    users[index] = updatedUser;
-    saveToStorage(STORAGE_KEYS.USERS, users);
-  }
-  
-  return updatedUser;
-}
-
-// Projects
-export function getProjects(): Project[] {
-  return getFromStorage<Project>(STORAGE_KEYS.PROJECTS);
-}
-
-export function getProject(id: string): Project | undefined {
-  const projects = getProjects();
-  return projects.find((project) => project.id === id);
-}
-
-export function saveProject(project: Project): Project {
-  const projects = getProjects();
-  projects.push(project);
-  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
-  return project;
-}
-
-export function updateProject(updatedProject: Project): Project {
-  const projects = getProjects();
-  const index = projects.findIndex((project) => project.id === updatedProject.id);
-  
-  if (index !== -1) {
-    projects[index] = updatedProject;
-    saveToStorage(STORAGE_KEYS.PROJECTS, projects);
-  }
-  
-  return updatedProject;
-}
-
-// Vehicles
-export function getVehicles(): Vehicle[] {
-  return getFromStorage<Vehicle>(STORAGE_KEYS.VEHICLES);
-}
-
-export function getVehicle(id: string): Vehicle | undefined {
-  const vehicles = getVehicles();
-  return vehicles.find((vehicle) => vehicle.id === id);
-}
-
-export function saveVehicle(vehicle: Vehicle): Vehicle {
-  const vehicles = getVehicles();
-  vehicles.push(vehicle);
-  saveToStorage(STORAGE_KEYS.VEHICLES, vehicles);
-  return vehicle;
-}
-
-export function updateVehicle(updatedVehicle: Vehicle): Vehicle {
-  const vehicles = getVehicles();
-  const index = vehicles.findIndex((vehicle) => vehicle.id === updatedVehicle.id);
-  
-  if (index !== -1) {
-    vehicles[index] = updatedVehicle;
-    saveToStorage(STORAGE_KEYS.VEHICLES, vehicles);
-  }
-  
-  return updatedVehicle;
-}
-
-// Drivers
-export function getDrivers(): Driver[] {
-  return getFromStorage<Driver>(STORAGE_KEYS.DRIVERS);
-}
-
-export function getDriver(id: string): Driver | undefined {
-  const drivers = getDrivers();
-  return drivers.find((driver) => driver.id === id);
-}
-
-export function saveDriver(driver: Driver): Driver {
-  const drivers = getDrivers();
-  drivers.push(driver);
-  saveToStorage(STORAGE_KEYS.DRIVERS, drivers);
-  return driver;
-}
-
-// Progress Entries
-export function getProgressEntries(): ProgressEntry[] {
-  return getFromStorage<ProgressEntry>(STORAGE_KEYS.PROGRESS_ENTRIES);
-}
-
-export function getProgressEntry(id: string): ProgressEntry | undefined {
-  const entries = getProgressEntries();
-  return entries.find((entry) => entry.id === id);
-}
-
-export function saveProgressEntry(entry: ProgressEntry): ProgressEntry {
-  const entries = getProgressEntries();
-  entries.push(entry);
-  saveToStorage(STORAGE_KEYS.PROGRESS_ENTRIES, entries);
-  return entry;
-}
-
-export function updateProgressEntry(updatedEntry: ProgressEntry): ProgressEntry {
-  const entries = getProgressEntries();
-  const index = entries.findIndex((entry) => entry.id === updatedEntry.id);
-  
-  if (index !== -1) {
-    entries[index] = updatedEntry;
-    saveToStorage(STORAGE_KEYS.PROGRESS_ENTRIES, entries);
-  }
-  
-  return updatedEntry;
-}
-
-// Notifications
-export function getNotifications(): Notification[] {
-  return getFromStorage<Notification>(STORAGE_KEYS.NOTIFICATIONS);
-}
-
-export function getNotificationsByUser(userId: string): Notification[] {
-  const notifications = getNotifications();
-  return notifications.filter(notification => notification.userId === userId);
-}
-
-export function saveNotification(notification: Notification): Notification {
-  const notifications = getNotifications();
-  notifications.push(notification);
-  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
-  return notification;
-}
-
-export function markNotificationAsRead(id: string): void {
-  const notifications = getNotifications();
-  const index = notifications.findIndex((notification) => notification.id === id);
-  
-  if (index !== -1) {
-    notifications[index].isRead = true;
-    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
-  }
-}
-
-// Payment Requests with history tracking
-export function getPaymentRequests(): PaymentRequest[] {
-  return getFromStorage<PaymentRequest>(STORAGE_KEYS.PAYMENT_REQUESTS);
-}
-
-export function getPaymentRequestsByStatus(status: PaymentRequest["status"]): PaymentRequest[] {
-  const requests = getPaymentRequests();
-  return requests.filter((request) => request.status === status);
-}
-
-export function savePaymentRequest(request: PaymentRequest): PaymentRequest {
-  const requests = getPaymentRequests();
-  
-  // Ensure statusHistory exists
-  if (!request.statusHistory) {
-    request.statusHistory = [{
-      status: request.status,
-      changedBy: request.requestedBy,
-      changedAt: request.requestedAt,
-    }];
-  }
-  
-  requests.push(request);
-  saveToStorage(STORAGE_KEYS.PAYMENT_REQUESTS, requests);
-  return request;
-}
-
-export function updatePaymentRequest(updatedRequest: PaymentRequest): PaymentRequest {
-  const requests = getPaymentRequests();
-  const index = requests.findIndex((request) => request.id === updatedRequest.id);
-  
-  if (index !== -1) {
-    // Add status to history if it changed
-    const oldRequest = requests[index];
-    if (oldRequest.status !== updatedRequest.status) {
-      if (!updatedRequest.statusHistory) {
-        updatedRequest.statusHistory = [];
-      }
-      
-      updatedRequest.statusHistory.push({
-        status: updatedRequest.status,
-        changedBy: updatedRequest.reviewedBy || "system",
-        changedAt: new Date().toISOString(),
-        comments: updatedRequest.comments,
-      });
-      
-      // Create notification for payment requester
-      const notification: Notification = {
-        id: generateId(),
-        userId: oldRequest.requestedBy,
-        type: "payment_status",
-        title: `Payment Request ${updatedRequest.status.charAt(0).toUpperCase() + updatedRequest.status.slice(1)}`,
-        message: `Your payment request of ₹${updatedRequest.amount.toFixed(2)} has been ${updatedRequest.status}`,
-        relatedId: updatedRequest.id,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      };
-      
-      saveNotification(notification);
-    }
-    
-    requests[index] = updatedRequest;
-    saveToStorage(STORAGE_KEYS.PAYMENT_REQUESTS, requests);
-  }
-  
-  return updatedRequest;
-}
