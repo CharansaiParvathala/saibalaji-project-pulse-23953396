@@ -1,4 +1,3 @@
-
 import { PaymentRequest } from "@/types";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { COLORS } from "@/lib/statisticsHelpers";
@@ -21,7 +20,15 @@ const preparePurposeData = (payments: PaymentRequest[]) => {
         if (!purposeTotals[purpose]) {
           purposeTotals[purpose] = 0;
         }
-        purposeTotals[purpose] += Number(cost); // Convert to number to prevent type errors
+        if (typeof cost === 'number') {
+          purposeTotals[purpose] += cost;
+        } else {
+          // Handle potential non-number values safely
+          const costNumber = Number(cost);
+          if (!isNaN(costNumber)) {
+            purposeTotals[purpose] += costNumber;
+          }
+        }
       });
     } else if (payment.purposes && payment.purposes.length) {
       // Fall back to old method for backward compatibility

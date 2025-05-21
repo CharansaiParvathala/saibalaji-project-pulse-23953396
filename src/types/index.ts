@@ -23,6 +23,12 @@ export interface Project {
   createdAt: string;
   numWorkers?: number;
   totalDistance?: number;
+  
+  // For backward compatibility
+  created_by?: string;
+  created_at?: string;
+  num_workers?: number;
+  total_distance?: number;
 }
 
 // Vehicle type definition
@@ -40,6 +46,13 @@ export interface Vehicle {
   created_at: string;
   created_by: string;
   registration_number?: string;  // For backward compatibility
+  
+  // For backward compatibility with database
+  registration_number?: string;
+  type?: string;
+  pollution_certificate?: any;
+  fitness_certificate?: any;
+  additional_details?: any;
 }
 
 // Driver related types
@@ -51,10 +64,15 @@ export interface Driver {
   vehicleId?: string;
   assignedProjectId?: string;
   createdAt: string;
+  
+  // For backward compatibility with database
+  license_number?: string;
+  type?: string;
+  created_at?: string;
 }
 
 // Progress related types
-export type ProgressEntryStatus = "draft" | "submitted" | "approved" | "rejected" | "locked";
+export type ProgressEntryStatus = "draft" | "submitted" | "approved" | "rejected" | "locked" | "correction-requested";
 
 export interface ProgressEntry {
   id: string;
@@ -75,6 +93,24 @@ export interface ProgressEntry {
   reviewedAt?: string;
   projectName?: string;  // Added for display purposes
   userName?: string;     // Added for display purposes
+  correctionRequest?: { message: string; requestedBy: string; requestedAt: string };
+}
+
+// Photo interface for handling images with metadata
+export interface Photo {
+  id: string;
+  url: string;
+  metadata: {
+    timestamp: string;
+    location: GeoLocation;
+  };
+}
+
+// Geolocation type
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
 }
 
 // Payment related types
@@ -98,7 +134,7 @@ export interface PaymentRequest {
   projectId: string;
   amount: number;
   description: string;
-  purpose: PaymentPurpose;
+  purpose: PaymentPurpose;  // Single purpose
   requestedBy: string;
   requestedAt: string;
   status: PaymentRequestStatus;
@@ -111,11 +147,23 @@ export interface PaymentRequest {
     changedAt: string;
     comments?: string;
   }[];
+  
   // Backward compatibility fields
   purposes?: PaymentPurpose[];  
   purposeCosts?: Record<string, number>;
   photos?: any[];
   paymentDate?: string;
+  
+  // Vehicle-related fields
+  vehicle_used?: boolean;
+  vehicle_id?: string;
+  driver_id?: string;
+  meter_start_reading?: any;
+  meter_end_reading?: any;
+  
+  // Additional fields from database
+  scheduled_date?: string;
+  paid_date?: string;
 }
 
 // Notification related types
@@ -139,6 +187,12 @@ export interface StorageMetrics {
   used_size: number;
   percentage_used: number;
   last_updated: string;
+  
+  // For backward compatibility
+  last_updated?: string;
+  percentage_used?: number;
+  total_size?: number;
+  used_size?: number;
 }
 
 // Backup Link type
@@ -149,11 +203,4 @@ export interface BackupLink {
   description?: string;
   created_at?: string;
   created_by?: string;
-}
-
-// Geolocation type
-export interface GeoLocation {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
 }

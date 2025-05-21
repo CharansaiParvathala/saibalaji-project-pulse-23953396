@@ -1,9 +1,6 @@
 
 import { generateId } from "./storage";
-import { Project, ProgressEntry, PaymentRequest, User, Vehicle, Driver } from "@/types";
-
-// Types for demo data
-type PaymentPurpose = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
+import { Project, ProgressEntry, PaymentRequest, User, Vehicle, Driver, PaymentPurpose } from "@/types";
 
 // Generate demo data for statistics and testing
 export const generateDemoData = () => {
@@ -24,29 +21,29 @@ export const generateDemoData = () => {
     {
       id: "proj1",
       name: "Highway Extension",
-      num_workers: 25,
-      created_by: "user1",
-      created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+      numWorkers: 25,
+      createdBy: "user1",
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
       status: "active",
-      total_distance: 10000
+      totalDistance: 10000
     },
     {
       id: "proj2",
       name: "Bridge Construction",
-      num_workers: 40,
-      created_by: "user2",
-      created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+      numWorkers: 40,
+      createdBy: "user2",
+      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
       status: "active",
-      total_distance: 5000
+      totalDistance: 5000
     },
     {
       id: "proj3",
       name: "Road Maintenance",
-      num_workers: 15,
-      created_by: "user3",
-      created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
+      numWorkers: 15,
+      createdBy: "user3",
+      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
       status: "completed",
-      total_distance: 8000
+      totalDistance: 8000
     }
   ];
   
@@ -56,25 +53,29 @@ export const generateDemoData = () => {
       id: "user1",
       name: "Rajesh Leader",
       email: "leader@example.com",
-      role: "leader"
+      role: "leader",
+      created_at: new Date().toISOString()
     },
     {
       id: "user2",
       name: "Priya Checker",
       email: "checker@example.com",
-      role: "checker"
+      role: "checker",
+      created_at: new Date().toISOString()
     },
     {
       id: "user3",
       name: "Vijay Owner",
       email: "owner@example.com",
-      role: "owner"
+      role: "owner",
+      created_at: new Date().toISOString()
     },
     {
       id: "user4",
       name: "Anil Admin",
       email: "admin@example.com",
-      role: "admin"
+      role: "admin",
+      created_at: new Date().toISOString()
     }
   ];
   
@@ -84,7 +85,12 @@ export const generateDemoData = () => {
       id: "veh1",
       model: "Tata Truck 407",
       registration_number: "MH02 AB1234",
-      type: "truck",
+      vehicle_type: "truck",
+      manufacturer: "Tata",
+      vehicle_number: "T407",
+      is_active: true,
+      created_at: new Date().toISOString(),
+      created_by: "user1",
       pollution_certificate: {
         number: "POL123456",
         expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
@@ -92,14 +98,18 @@ export const generateDemoData = () => {
       fitness_certificate: {
         number: "FIT789012",
         expiryDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      created_at: new Date().toISOString()
+      }
     },
     {
       id: "veh2",
       model: "JCB Excavator",
       registration_number: "MH04 CD5678",
-      type: "truck",
+      vehicle_type: "truck",
+      manufacturer: "JCB",
+      vehicle_number: "EX200",
+      is_active: true,
+      created_at: new Date().toISOString(),
+      created_by: "user1",
       pollution_certificate: {
         number: "POL789012",
         expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
@@ -107,8 +117,7 @@ export const generateDemoData = () => {
       fitness_certificate: {
         number: "FIT345678",
         expiryDate: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      created_at: new Date().toISOString()
+      }
     }
   ];
   
@@ -158,7 +167,7 @@ export const generateDemoData = () => {
         
         // Add some payment requests associated with this entry
         if (Math.random() > 0.5) {
-          const purposes: ("food" | "fuel" | "labour" | "vehicle" | "water" | "other")[] = ["food", "fuel", "labour", "vehicle", "water", "other"];
+          const purposeOptions: PaymentPurpose[] = ["food", "fuel", "labour", "vehicle", "water", "other"];
           
           const numPayments = randomBetween(1, 3);
           for (let j = 0; j < numPayments; j++) {
@@ -166,18 +175,18 @@ export const generateDemoData = () => {
             const requestedDate = new Date(date);
             requestedDate.setHours(randomBetween(8, 17));
             
-            const purposesList = [];
-            const purposeCosts: Record<string, number> = {};
+            const purposesList: PaymentPurpose[] = [];
+            const purposeCosts: Record<PaymentPurpose, number> = {} as Record<PaymentPurpose, number>;
             
             const numPurposes = randomBetween(1, 3);
             for (let k = 0; k < numPurposes; k++) {
-              const purpose = purposes[randomBetween(0, purposes.length - 1)];
+              const purpose = purposeOptions[randomBetween(0, purposeOptions.length - 1)] as PaymentPurpose;
               purposesList.push(purpose);
               purposeCosts[purpose] = randomBetween(500, 2000);
             }
             
             const paymentId = generateId();
-            const paymentStatus = Math.random() > 0.6 ? "pending" : 
+            const paymentStatus: PaymentRequestStatus = Math.random() > 0.6 ? "pending" : 
                                  Math.random() > 0.5 ? "approved" : 
                                  Math.random() > 0.5 ? "rejected" : 
                                  Math.random() > 0.5 ? "scheduled" : "paid";
@@ -185,8 +194,9 @@ export const generateDemoData = () => {
             const payment: PaymentRequest = {
               id: paymentId,
               projectId: project.id,
-              purposes: Array.from(new Set(purposesList)) as any, // Remove duplicates
-              purposeCosts: purposeCosts as Record<PaymentPurpose, number>,
+              purpose: purposesList[0], // Set primary purpose for compatibility
+              purposes: Array.from(new Set(purposesList)), // Remove duplicates
+              purposeCosts: purposeCosts,
               amount: Math.floor(Math.random() * 10000) + 500,
               description: `Payment for ${purposesList.join(", ")}`,
               photos: [
@@ -215,7 +225,7 @@ export const generateDemoData = () => {
             // Add status history based on current status
             if (paymentStatus !== "pending") {
               payment.statusHistory!.push({
-                status: paymentStatus as any,
+                status: paymentStatus,
                 changedBy: payment.reviewedBy || "system",
                 changedAt: payment.reviewedAt || new Date().toISOString(),
                 comments: payment.comments

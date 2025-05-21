@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -18,9 +17,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { generateId, getProjects, getProgressEntries, savePaymentRequest, updateProgressEntry } from "@/lib/storage";
 import { getCurrentLocation } from "@/lib/geolocation";
-import { GeoLocation, Photo, PaymentPurpose, Project, ProgressEntry, PaymentRequest, Vehicle, Driver } from "@/types";
+import { GeoLocation, PaymentPurpose, Project, ProgressEntry, PaymentRequest, Vehicle, Driver, Photo } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export default function RequestPayment() {
   const navigate = useNavigate();
@@ -36,14 +36,26 @@ export default function RequestPayment() {
   const [progressEntries, setProgressEntries] = useState<ProgressEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState("");
   const [purposes, setPurposes] = useState<PaymentPurpose[]>([]);
-  const [purposeCosts, setPurposeCosts] = useState<Record<PaymentPurpose, string>>({
-    food: "",
-    fuel: "",
-    labour: "",
-    vehicle: "",
-    water: "",
-    other: "",
-  });
+  const [purposeCosts, setPurposeCosts] = useState<Record<PaymentPurpose, string>>({} as Record<PaymentPurpose, string>);
+  
+  // Initialize purposeCosts with available options
+  useEffect(() => {
+    const initialPurposeCosts: Partial<Record<PaymentPurpose, string>> = {
+      food: "",
+      fuel: "",
+      labour: "",
+      vehicle: "",
+      water: "",
+      other: "",
+      salary: "",
+      equipment: "",
+      materials: "",
+      transport: "",
+      maintenance: "",
+    };
+    
+    setPurposeCosts(initialPurposeCosts as Record<PaymentPurpose, string>);
+  }, []);
   
   // Vehicle related states
   const [vehicleUsed, setVehicleUsed] = useState(false);
@@ -61,6 +73,11 @@ export default function RequestPayment() {
     { value: "vehicle", label: "Vehicle" },
     { value: "water", label: "Water" },
     { value: "other", label: "Other" },
+    { value: "salary", label: "Salary" },
+    { value: "equipment", label: "Equipment" },
+    { value: "materials", label: "Materials" },
+    { value: "transport", label: "Transport" },
+    { value: "maintenance", label: "Maintenance" },
   ];
 
   // Calculate total amount from purpose costs
@@ -103,8 +120,23 @@ export default function RequestPayment() {
           description: "Failed to load vehicles",
           variant: "destructive",
         });
-      } else {
-        setVehicles(vehiclesData);
+      } else if (vehiclesData) {
+        // Map database fields to our Vehicle interface
+        const mappedVehicles: Vehicle[] = vehiclesData.map((v) => ({
+          id: v.id,
+          model: v.model,
+          manufacturer: v.model.split(' ')[0] || 'Unknown',  // Extract manufacturer from model as fallback
+          vehicle_number: v.registration_number,
+          registration_number: v.registration_number,
+          vehicle_type: (v.type as VehicleType) || 'truck',
+          is_active: true,
+          created_at: v.created_at || new Date().toISOString(),
+          created_by: 'system',
+          pollution_certificate: v.pollution_certificate,
+          fitness_certificate: v.fitness_certificate
+        }));
+        
+        setVehicles(mappedVehicles);
       }
       
       // Fetch drivers
@@ -119,8 +151,18 @@ export default function RequestPayment() {
           description: "Failed to load drivers",
           variant: "destructive",
         });
-      } else {
-        setDrivers(driversData);
+      } else if (driversData) {
+        // Map database fields to our Driver interface
+        const mappedDrivers: Driver[] = driversData.map((d) => ({
+          id: d.id,
+          name: d.name,
+          licenseNumber: d.license_number,
+          contactNumber: d.type || 'Unknown', // Using type field as contactNumber as fallback
+          createdAt: d.created_at || new Date().toISOString(),
+          license_number: d.license_number // For backward compatibility
+        }));
+        
+        setDrivers(mappedDrivers);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -355,12 +397,13 @@ export default function RequestPayment() {
         vehicle_used: false
       };
       
-      // Create payment request object
+      // Create payment request object with primary purpose field for compatibility
       const paymentRequest: PaymentRequest = {
         id: newRequestId,
         projectId,
         amount: parseFloat(amount),
         description,
+        purpose: purposes.length > 0 ? purposes[0] : "other", // Set first purpose as primary
         purposes,
         purposeCosts: parsedPurposeCosts,
         photos,
@@ -612,7 +655,7 @@ export default function RequestPayment() {
                       <SelectContent>
                         {drivers.map((driver) => (
                           <SelectItem key={driver.id} value={driver.id}>
-                            {driver.name} ({driver.license_number})
+                            {driver.name} ({driver.licenseNumber})
                           </SelectItem>
                         ))}
                       </SelectContent>

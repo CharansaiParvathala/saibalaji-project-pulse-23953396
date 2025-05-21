@@ -43,7 +43,14 @@ export default function StorageManagementPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const [storageMetrics, setStorageMetrics] = useState<StorageMetrics | null>(null);
+  const [metrics, setMetrics] = useState<StorageMetrics>({
+    id: "",
+    total_size: 0,
+    used_size: 0,
+    percentage_used: 0,
+    last_updated: new Date().toISOString()
+  });
+  
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   
@@ -86,9 +93,9 @@ export default function StorageManagementPage() {
           throw insertError;
         }
         
-        setStorageMetrics(insertedData);
+        setMetrics(insertedData);
       } else {
-        setStorageMetrics(data);
+        setMetrics(data);
         
         // Check if we should show storage warning
         if (data.percentage_used >= 90) {
@@ -195,6 +202,7 @@ export default function StorageManagementPage() {
       }
       
       // Update storage metrics
+      const id = typeof metrics.id === 'number' ? metrics.id.toString() : metrics.id;
       await supabase
         .from('storage_metrics')
         .update({
@@ -202,7 +210,7 @@ export default function StorageManagementPage() {
           percentage_used: 0,
           last_updated: new Date().toISOString()
         })
-        .eq('id', storageMetrics?.id);
+        .eq('id', id);
       
       toast({
         title: "Database Cleared",
@@ -260,7 +268,7 @@ export default function StorageManagementPage() {
                 Storage Usage Warning
               </h4>
               <p className="text-amber-700 dark:text-amber-400 text-sm leading-relaxed">
-                Your storage usage has reached {storageMetrics?.percentage_used}%, which is above the recommended threshold. 
+                Your storage usage has reached {metrics.percentage_used}%, which is above the recommended threshold. 
                 Please consider downloading your data and clearing the database to free up space.
               </p>
               <div className="flex gap-3 mt-3">
@@ -299,21 +307,21 @@ export default function StorageManagementPage() {
               <div className="flex justify-center py-8">
                 <p>Loading storage information...</p>
               </div>
-            ) : storageMetrics ? (
+            ) : metrics ? (
               <>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Used Space</span>
                     <span className="text-sm font-medium">
-                      {formatFileSize(storageMetrics.used_size)} / {formatFileSize(storageMetrics.total_size)}
+                      {formatFileSize(metrics.used_size)} / {formatFileSize(metrics.total_size)}
                     </span>
                   </div>
                   <Progress 
-                    value={storageMetrics.percentage_used}
+                    value={metrics.percentage_used}
                     className={`h-2 ${
-                      storageMetrics.percentage_used > 90
+                      metrics.percentage_used > 90
                         ? 'bg-red-200 dark:bg-red-950'
-                        : storageMetrics.percentage_used > 70
+                        : metrics.percentage_used > 70
                         ? 'bg-yellow-200 dark:bg-yellow-950'
                         : 'bg-gray-200 dark:bg-gray-800'
                     }`}
@@ -321,13 +329,13 @@ export default function StorageManagementPage() {
                   <div className="flex justify-between text-xs">
                     <span>0%</span>
                     <span className={`${
-                      storageMetrics.percentage_used > 90
+                      metrics.percentage_used > 90
                         ? 'text-red-500'
-                        : storageMetrics.percentage_used > 70
+                        : metrics.percentage_used > 70
                         ? 'text-yellow-500'
                         : ''
                     }`}>
-                      {storageMetrics.percentage_used.toFixed(1)}%
+                      {metrics.percentage_used.toFixed(1)}%
                     </span>
                     <span>100%</span>
                   </div>
@@ -341,7 +349,7 @@ export default function StorageManagementPage() {
                     <div>
                       <p className="text-sm font-medium">Total Storage</p>
                       <p className="text-2xl font-semibold">
-                        {formatFileSize(storageMetrics.total_size)}
+                        {formatFileSize(metrics.total_size)}
                       </p>
                     </div>
                   </div>
@@ -352,7 +360,7 @@ export default function StorageManagementPage() {
                     <div>
                       <p className="text-sm font-medium">Used Storage</p>
                       <p className="text-2xl font-semibold">
-                        {formatFileSize(storageMetrics.used_size)}
+                        {formatFileSize(metrics.used_size)}
                       </p>
                     </div>
                   </div>
@@ -360,7 +368,7 @@ export default function StorageManagementPage() {
                 
                 <div className="pt-4">
                   <p className="text-sm text-muted-foreground">
-                    Last updated: {new Date(storageMetrics.last_updated).toLocaleString()}
+                    Last updated: {new Date(metrics.last_updated).toLocaleString()}
                   </p>
                 </div>
               </>
