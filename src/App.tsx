@@ -4,7 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
-import Index from "@/pages/Index";
+import HomePage from "@/pages/HomePage";
 import NotFound from "@/pages/NotFound";
 import Unauthorized from "@/pages/Unauthorized";
 import Projects from "@/pages/projects";
@@ -43,8 +43,8 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Make sure the index route is the first one */}
-        <Route path="/" element={<Index />} />
+        {/* Make the HomePage the index route */}
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/unauthorized" element={<Unauthorized />} />

@@ -19,10 +19,10 @@ import {
   Key
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Sidebar() {
-  const { user, logout } = useSupabaseAuth();
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -68,7 +68,7 @@ export function Sidebar() {
     ],
   };
   
-  const links = roleLinks[user.role] || [];
+  const links = roleLinks[user.role as keyof typeof roleLinks] || [];
   
   return (
     <>

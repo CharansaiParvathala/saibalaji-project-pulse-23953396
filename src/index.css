@@ -8,65 +8,65 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%; /* #F8F9FA */
-    --foreground: 210 15% 32%; /* #45545E */
+    --background: 0 0% 100%;
+    --foreground: 222 19% 14%;
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 210 40% 25%; /* #2C3E50 */
+    --card: 0 0% 100%;
+    --card-foreground: 222 19% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 25%;
+    --popover-foreground: 222 19% 14%;
     
-    --primary: 210 35% 62%; /* #7C9CBF */
+    --primary: 255 79% 74%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 15 88% 78%; /* #F8B195 */
+    --secondary: 24 95% 53%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 210 20% 93%; /* #E9EDF2 */
-    --muted-foreground: 215 15% 45%; /* #637381 */
+    --muted: 0 0% 95%;
+    --muted-foreground: 240 3.8% 56%;
 
-    --accent: 160 35% 80%; /* #B8E1D4 */
-    --accent-foreground: 210 40% 25%;
+    --accent: 298 84% 61%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 68% 67%; /* #E57373 */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 205 25% 86%; /* #D9E2EC */
-    --input: 205 25% 86%;
-    --ring: 210 35% 62%;
+    --border: 260 100% 94%;
+    --input: 260 100% 94%;
+    --ring: 255 79% 74%;
 
     --radius: 0.5rem;
   }
  
   .dark {
-    --background: 220 16% 22%; /* #2E3440 */
-    --foreground: 218 27% 94%; /* #ECEFF4 */
+    --background: 222 19% 14%;
+    --foreground: 0 0% 95%;
 
-    --card: 220 13% 28%; /* #3B4252 */
-    --card-foreground: 218 27% 94%;
+    --card: 222 15% 23%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 13% 28%;
-    --popover-foreground: 218 27% 94%;
+    --popover: 222 15% 23%;
+    --popover-foreground: 0 0% 95%;
     
-    --primary: 197 37% 67%; /* #88C0D0 */
+    --primary: 255 79% 74%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 354 42% 56%; /* #BF616A */
+    --secondary: 24 95% 53%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 220 16% 36%; /* #4C566A */
-    --muted-foreground: 220 16% 80%;
+    --muted: 222 15% 35%;
+    --muted-foreground: 0 0% 85%;
 
-    --accent: 197 37% 67%; /* #88C0D0 */
+    --accent: 298 84% 61%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 50%; /* #BF4040 */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 36%;
-    --input: 220 16% 36%;
-    --ring: 197 37% 67%;
+    --border: 222 15% 35%;
+    --input: 222 15% 35%;
+    --ring: 255 79% 74%;
   }
 }
  
@@ -82,14 +82,18 @@
   }
 }
 
-/* Custom Component Styles */
+/* Amazon-inspired Component Styles */
 @layer components {
   .data-card {
-    @apply bg-white rounded-lg shadow-soft p-4 border border-border/50 transition-all hover:shadow-medium;
+    @apply bg-white rounded-md shadow-soft p-4 border border-border/50 transition-all hover:shadow-medium;
   }
   
   .btn-primary {
     @apply bg-primary text-white hover:bg-primary/90 rounded-md px-4 py-2 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary/90 rounded-md px-4 py-2 transition-colors;
   }
   
   .btn-outline {
@@ -119,23 +123,51 @@
   .data-table tr {
     @apply border-b border-border/50 hover:bg-muted/50;
   }
-}
+  
+  /* Amazon-inspired navigation */
+  .amz-nav {
+    @apply bg-primary text-white;
+  }
+  
+  .amz-search-bar {
+    @apply flex-1 flex items-center max-w-4xl;
+  }
+  
+  .amz-search-input {
+    @apply flex-1 rounded-l-md border-0 py-2 px-3 focus:ring-0 focus:outline-none;
+  }
+  
+  .amz-search-button {
+    @apply bg-secondary hover:bg-secondary/90 text-white rounded-r-md p-2;
+  }
+  
+  .amz-nav-item {
+    @apply flex flex-col justify-center px-3 py-1 hover:border hover:border-white rounded transition-all;
+  }
+  
+  .amz-nav-label {
+    @apply text-xs opacity-85;
+  }
+  
+  .amz-nav-text {
+    @apply text-sm font-semibold;
+  }
+  
+  .amz-section {
+    @apply py-6;
+  }
 
-/* Language selector styles */
-.language-selector {
-  @apply relative inline-block;
-}
+  .amz-carousel {
+    @apply relative overflow-hidden;
+  }
+  
+  .amz-product-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4;
+  }
 
-.language-menu {
-  @apply absolute right-0 mt-2 w-40 rounded-md shadow-medium bg-white dark:bg-dark-card border border-border/50 overflow-hidden z-50;
-}
-
-.language-option {
-  @apply px-4 py-2 text-sm hover:bg-muted/50 cursor-pointer flex items-center gap-2;
-}
-
-.top-navbar {
-  @apply sticky top-0 z-50 bg-white dark:bg-dark-bg border-b border-border/50 shadow-sm;
+  .amz-product-card {
+    @apply bg-white rounded-sm border border-border/10 shadow-sm hover:shadow-md transition-shadow p-3 flex flex-col;
+  }
 }
 
 /* Scrollbar styles */

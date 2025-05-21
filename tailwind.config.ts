@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
@@ -21,31 +20,30 @@ const config = {
     },
     extend: {
       colors: {
-        // Light theme - soft and pale colors
-        primary: "#7C9CBF", // Soft blue
-        secondary: "#F8B195", // Soft coral
-        accent: "#B8E1D4", // Soft mint
-        background: "#F8F9FA", // Off-white
-        foreground: "#45545E", // Muted navy
+        // Amazon-inspired with different color palette
+        primary: "#9b87f5", // Purple instead of Amazon's blue
+        secondary: "#F97316", // Orange
+        accent: "#D946EF", // Magenta
+        background: "#FFFFFF", // White
+        foreground: "#1A1F2C", // Dark navy
         muted: {
-          DEFAULT: "#E9EDF2", // Light grayish blue
-          foreground: "#637381", // Slate gray
+          DEFAULT: "#F1F1F1", // Light gray
+          foreground: "#8E9196", // Medium gray
         },
-        "text-primary": "#2C3E50",
-        "border-color": "#D9E2EC",
+        "border-color": "#E5DEFF", // Soft purple
         
-        // Dark theme - softer dark palette
-        "dark-bg": "#2E3440", 
-        "dark-text": "#ECEFF4",
-        "dark-card": "#3B4252",
-        "dark-accent": "#88C0D0",
-        "dark-muted": "#4C566A",
+        // Dark theme
+        "dark-bg": "#1A1F2C", 
+        "dark-text": "#F1F1F1",
+        "dark-card": "#2D3748",
+        "dark-accent": "#9b87f5",
+        "dark-muted": "#4A5568",
         
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         destructive: {
-          DEFAULT: "#E57373", // Soft red
+          DEFAULT: "#E53E3E", // Red
           foreground: "#FFFFFF",
         },
         popover: {
@@ -53,13 +51,13 @@ const config = {
           foreground: "hsl(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: "#FFFFFF", // Pure white for cards
-          foreground: "#2C3E50",
+          DEFAULT: "#FFFFFF", 
+          foreground: "#1A1F2C",
         },
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
+        lg: "0.5rem",
+        md: "0.375rem",
         sm: "0.25rem",
       },
       boxShadow: {

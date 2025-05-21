@@ -2,23 +2,24 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth"; 
-import { UserRole } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { Role } from "@/types";
 import { useTranslation } from "react-i18next";
 
 interface LayoutProps {
   children: ReactNode;
-  requiredRoles?: Array<UserRole>;
+  requiredRoles?: Array<Role>;
   containerClassName?: string;
+  hideAuth?: boolean; // Option to hide auth check for public pages
 }
 
-export function Layout({ children, requiredRoles, containerClassName = "" }: LayoutProps) {
-  const { user, isAuthenticated, isLoading } = useSupabaseAuth();
+export function Layout({ children, requiredRoles, containerClassName = "", hideAuth = false }: LayoutProps) {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   const { t } = useTranslation();
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (!hideAuth && isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/20">
         <div className="flex flex-col items-center">
@@ -32,13 +33,13 @@ export function Layout({ children, requiredRoles, containerClassName = "" }: Lay
     );
   }
 
-  // Check if the user is authenticated
-  if (!isAuthenticated) {
+  // Check if the user is authenticated for protected pages
+  if (!hideAuth && !isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check if the user has required role
-  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
+  if (!hideAuth && requiredRoles && user && !requiredRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

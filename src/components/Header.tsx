@@ -1,15 +1,14 @@
 
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { 
   Building2, Menu, X, LogOut, User, Bell, ChevronDown, Search, 
-  LayoutDashboard, FolderOpen, TrendingUp, Users, Truck, BarChart4,
-  FileDown, FileUp
+  ShoppingCart, MapPin, Package, BarChart4, Users, Truck
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,113 +21,98 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function Header() {
-  const { user, logout } = useSupabaseAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   
-  const navLinks = [
-    { name: t('common.dashboard'), href: "/dashboard", icon: <LayoutDashboard className="w-4 h-4 mr-2" />, roles: ["admin", "owner", "leader", "checker"] },
-    { name: t('common.projects'), href: "/projects", icon: <FolderOpen className="w-4 h-4 mr-2" />, roles: ["admin", "owner", "leader", "checker"] },
-    { name: t('common.progress'), href: "/progress", icon: <TrendingUp className="w-4 h-4 mr-2" />, roles: ["admin", "owner", "leader", "checker"] },
-    { name: t('common.payments'), href: "/payments/request", icon: <FileDown className="w-4 h-4 mr-2" />, roles: ["admin", "owner", "leader"] },
-    { name: t('common.users'), href: "/users", icon: <Users className="w-4 h-4 mr-2" />, roles: ["admin"] },
-    { name: t('common.vehicles'), href: "/vehicles", icon: <Truck className="w-4 h-4 mr-2" />, roles: ["admin", "owner"] },
-    { name: t('common.statistics'), href: "/statistics", icon: <BarChart4 className="w-4 h-4 mr-2" />, roles: ["admin", "owner"] },
-    { name: t('common.backup'), href: "/backup", icon: <FileUp className="w-4 h-4 mr-2" />, roles: ["admin", "owner"] },
-  ];
-  
-  const filteredLinks = user ? 
-    navLinks.filter(link => link.roles.includes(user.role)) 
-    : [];
-  
-  const isLinkActive = (path: string) => {
-    if (path === "/dashboard" && location.pathname === "/dashboard") {
-      return true;
-    }
-    if (path !== "/dashboard" && location.pathname.startsWith(path)) {
-      return true;
-    }
-    return false;
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Implement search functionality here
+    console.log("Searching for:", searchTerm);
   };
   
+  const categories = [
+    { name: t('common.projects'), href: "/projects" },
+    { name: t('common.progress'), href: "/progress" },
+    { name: t('common.payments'), href: "/payments/request" },
+    { name: t('common.statistics'), href: "/statistics" },
+    { name: t('common.vehicles'), href: "/vehicles" },
+    { name: t('common.users'), href: "/users" },
+    { name: t('common.backup'), href: "/backup" },
+  ];
+  
   return (
-    <header className="top-navbar">
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and Mobile Menu Button */}
-          <div className="flex items-center">
-            <button 
-              className="inline-flex md:hidden mr-4 text-foreground"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-            
-            <Link to="/" className="flex items-center gap-2 text-primary">
+    <header className="sticky top-0 z-50">
+      {/* Top navigation bar */}
+      <div className="amz-nav">
+        <div className="container mx-auto px-2 py-2">
+          <div className="flex items-center gap-2">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-1 text-white py-1 px-2 hover:border hover:border-white rounded">
               <Building2 className="h-7 w-7" />
               <span className="font-bold text-xl font-display hidden md:inline">
                 Sai Balaji
               </span>
             </Link>
-          </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-1 mx-4 flex-1">
-            {filteredLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`px-3 py-2 rounded-md text-sm flex items-center hover:bg-muted ${
-                  isLinkActive(link.href) 
-                    ? "bg-primary text-white font-medium" 
-                    : "text-foreground"
-                }`}
-              >
-                {link.icon}
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-          
-          {/* Right side items */}
-          <div className="flex items-center gap-2">
-            {/* Search button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-foreground"
-              onClick={() => setSearchOpen(!searchOpen)}
-            >
-              <Search className="h-5 w-5" />
-            </Button>
+            
+            {/* Delivery location */}
+            <div className="amz-nav-item hidden md:flex">
+              <span className="amz-nav-label">{t('common.delivery')}</span>
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span className="amz-nav-text">India</span>
+              </div>
+            </div>
+            
+            {/* Search bar */}
+            <form onSubmit={handleSearch} className="amz-search-bar">
+              <div className="flex-1 flex">
+                <select className="bg-white text-gray-700 px-2 py-2 rounded-l-md border-r border-gray-300 text-sm">
+                  <option value="all">{t('common.all')}</option>
+                  <option value="projects">{t('common.projects')}</option>
+                  <option value="vehicles">{t('common.vehicles')}</option>
+                  <option value="users">{t('common.users')}</option>
+                </select>
+                <input 
+                  type="text" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={`${t('common.search')}...`}
+                  className="amz-search-input"
+                />
+                <button type="submit" className="amz-search-button">
+                  <Search className="h-5 w-5" />
+                </button>
+              </div>
+            </form>
             
             {/* Language selector */}
-            <LanguageSelector />
+            <div className="hidden md:block">
+              <LanguageSelector />
+            </div>
             
             {/* Theme toggle */}
-            <ThemeToggle />
-            
-            {/* Notification center */}
-            {user && <NotificationCenter />}
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             
             {/* User menu */}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="ml-2 gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline-block max-w-28 truncate">{user.name}</span>
-                    <ChevronDown className="h-4 w-4 ml-1 opacity-60" />
-                  </Button>
+                  <button className="amz-nav-item">
+                    <span className="amz-nav-label">{t('common.hello')}, {user.name}</span>
+                    <div className="flex items-center">
+                      <span className="amz-nav-text">{t('common.account')}</span>
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </div>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-3 py-2 text-sm font-medium border-b mb-1 truncate">
+                <DropdownMenuContent align="end" className="w-56 bg-white">
+                  <div className="px-3 py-2 text-sm font-medium border-b mb-1 text-foreground">
                     {user.name}
                     <p className="text-xs text-muted-foreground font-normal">{user.role}</p>
                   </div>
@@ -152,50 +136,88 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="bg-primary text-white hover:bg-primary/90">
                 <Link to="/login">{t('common.login')}</Link>
               </Button>
             )}
+            
+            {/* Notifications */}
+            {user && (
+              <div className="amz-nav-item">
+                <NotificationCenter />
+              </div>
+            )}
+            
+            {/* Mobile menu button */}
+            <button 
+              className="inline-flex md:hidden text-white"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </div>
         </div>
-        
-        {/* Search bar */}
-        {searchOpen && (
-          <div className="py-2 border-t">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`${t('common.search')}...`}
-                className="pl-9"
-                autoFocus
-              />
-            </div>
+      </div>
+      
+      {/* Bottom navigation bar with categories (desktop) */}
+      <div className="bg-primary/90 text-white hidden md:block">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center py-1 overflow-x-auto">
+            {/* Hamburger menu */}
+            <button className="flex items-center gap-1 px-3 py-1 hover:bg-primary/80 rounded">
+              <Menu className="h-5 w-5" />
+              <span className="font-medium">{t('common.menu')}</span>
+            </button>
+            
+            {/* Categories */}
+            {categories.map((category) => (
+              <Link
+                key={category.href}
+                to={category.href}
+                className="px-3 py-1 hover:bg-primary/80 text-sm whitespace-nowrap"
+              >
+                {category.name}
+              </Link>
+            ))}
           </div>
-        )}
-        
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <nav className="md:hidden py-3 border-t">
-            <div className="space-y-1 px-2">
-              {filteredLinks.map((link) => (
+        </div>
+      </div>
+      
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-b">
+          <div className="container mx-auto py-3 px-4">
+            <div className="space-y-3">
+              {user && (
+                <div className="border-b pb-2">
+                  <span className="text-xs text-muted-foreground">{t('common.hello')}, {user.name}</span>
+                  <h3 className="font-medium">{user.role}</h3>
+                </div>
+              )}
+              
+              {categories.map((category) => (
                 <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`block px-3 py-2 rounded-md text-base flex items-center hover:bg-muted ${
-                    isLinkActive(link.href) 
-                      ? "bg-primary text-white font-medium" 
-                      : "text-foreground"
-                  }`}
+                  key={category.href}
+                  to={category.href}
+                  className="block px-2 py-2 hover:bg-muted rounded"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {link.icon}
-                  {link.name}
+                  {category.name}
                 </Link>
               ))}
+              
+              <div className="flex items-center gap-2 border-t pt-2">
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
             </div>
-          </nav>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

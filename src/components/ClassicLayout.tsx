@@ -1,22 +1,23 @@
+
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import ClassicMenuBar from "@/components/ClassicMenuBar";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   Home, FileText, Truck, Users, 
   Calendar, DollarSign, BarChart2, 
   LogOut, Settings, FileArchive, History,
   User
 } from "lucide-react";
-import { UserRole } from "@/types";
+import { Role } from "@/types";
 
 interface ClassicLayoutProps {
   children: ReactNode;
-  requiredRoles?: UserRole[];
+  requiredRoles?: Role[];
 }
 
 export function ClassicLayout({ children, requiredRoles }: ClassicLayoutProps) {
-  const { user, isAuthenticated, logout } = useSupabaseAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
 
   // Check if the user is authenticated
@@ -25,7 +26,7 @@ export function ClassicLayout({ children, requiredRoles }: ClassicLayoutProps) {
   }
 
   // Check if the user has required role
-  if (requiredRoles && user && !requiredRoles.includes(user.role as UserRole)) {
+  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

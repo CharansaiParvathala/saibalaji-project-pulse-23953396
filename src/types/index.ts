@@ -9,6 +9,9 @@ export interface User {
   email: string;
   role: Role;
   created_at: string;
+  
+  // For backward compatibility
+  createdAt?: string;
 }
 
 // Project related types
@@ -45,14 +48,18 @@ export interface Vehicle {
   is_active: boolean;
   created_at: string;
   created_by: string;
-  registration_number?: string;  // For backward compatibility
   
   // For backward compatibility with database
   registration_number?: string;
+  registrationNumber?: string;
   type?: string;
+  vehicleType?: VehicleType;
   pollution_certificate?: any;
+  pollutionCertificate?: any;
   fitness_certificate?: any;
+  fitnessCertificate?: any;
   additional_details?: any;
+  additionalDetails?: any;
 }
 
 // Driver related types
@@ -67,6 +74,9 @@ export interface Driver {
   
   // For backward compatibility with database
   license_number?: string;
+  contact_number?: string;
+  vehicle_id?: string;
+  assigned_project_id?: string;
   type?: string;
   created_at?: string;
 }
@@ -82,7 +92,7 @@ export interface ProgressEntry {
   timeSpent: number;
   workersPresent: number;
   notes?: string;
-  photos?: string[] | any[];  // Updated to accept complex photo objects
+  photos?: string[] | any[] | Photo[];  // Updated to accept complex photo objects
   paymentRequests?: string[];
   status: ProgressEntryStatus;
   submittedBy?: string;
@@ -93,16 +103,33 @@ export interface ProgressEntry {
   reviewedAt?: string;
   projectName?: string;  // Added for display purposes
   userName?: string;     // Added for display purposes
+  vehicleUsed?: boolean; // Added for tracking vehicle usage
   correctionRequest?: { message: string; requestedBy: string; requestedAt: string };
+  
+  // For backward compatibility
+  project_id?: string;
+  distance_completed?: number;
+  time_spent?: number;
+  workers_present?: number;
+  payment_requests?: string[];
+  submitted_by?: string;
+  submitted_at?: string;
+  created_by?: string;
+  is_locked?: boolean;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  project_name?: string;
+  user_name?: string;
+  vehicle_used?: boolean;
 }
 
 // Photo interface for handling images with metadata
 export interface Photo {
   id: string;
   url: string;
-  metadata: {
+  metadata?: {
     timestamp: string;
-    location: GeoLocation;
+    location?: GeoLocation;
   };
 }
 
@@ -149,21 +176,41 @@ export interface PaymentRequest {
   }[];
   
   // Backward compatibility fields
+  project_id?: string;
   purposes?: PaymentPurpose[];  
   purposeCosts?: Record<string, number>;
-  photos?: any[];
+  purpose_costs?: Record<string, number>;
+  photos?: Photo[] | any[];
   paymentDate?: string;
+  payment_date?: string;
+  requested_by?: string;
+  requested_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  status_history?: {
+    status: PaymentRequestStatus;
+    changed_by: string;
+    changed_at: string;
+    comments?: string;
+  }[];
   
   // Vehicle-related fields
   vehicle_used?: boolean;
+  vehicleUsed?: boolean;
   vehicle_id?: string;
+  vehicleId?: string;
   driver_id?: string;
+  driverId?: string;
   meter_start_reading?: any;
+  meterStartReading?: any;
   meter_end_reading?: any;
+  meterEndReading?: any;
   
   // Additional fields from database
   scheduled_date?: string;
+  scheduledDate?: string;
   paid_date?: string;
+  paidDate?: string;
 }
 
 // Notification related types
@@ -178,21 +225,27 @@ export interface Notification {
   relatedId?: string;
   isRead: boolean;
   createdAt: string;
+  
+  // For backward compatibility
+  user_id?: string;
+  related_id?: string;
+  is_read?: boolean;
+  created_at?: string;
 }
 
 // Storage Metrics type
 export interface StorageMetrics {
-  id: number | string;  // Updated to accept string IDs from Supabase
+  id: string | number;  // Updated to accept string IDs
   total_size: number;
   used_size: number;
   percentage_used: number;
   last_updated: string;
   
   // For backward compatibility
-  last_updated?: string;
-  percentage_used?: number;
-  total_size?: number;
-  used_size?: number;
+  totalSize?: number;
+  usedSize?: number;
+  percentageUsed?: number;
+  lastUpdated?: string;
 }
 
 // Backup Link type
@@ -203,4 +256,15 @@ export interface BackupLink {
   description?: string;
   created_at?: string;
   created_by?: string;
+  createdAt?: string;
+  createdBy?: string;
 }
+
+// Define a JSON type for compatibility
+export type Json = 
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
