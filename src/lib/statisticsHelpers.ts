@@ -72,7 +72,7 @@ export const prepareLeaderData = (entries: ProgressEntry[]) => {
   
   // Process entries
   entries.forEach(entry => {
-    const leaderName = entry.userName || 'Unknown';
+    const leaderName = entry.userName || entry.submittedBy || 'Unknown';
     
     if (!dataByLeader[leaderName]) {
       dataByLeader[leaderName] = 0;
@@ -98,9 +98,9 @@ export const preparePurposeData = (payments: PaymentRequest[]) => {
         if (!purposeTotals[purpose]) {
           purposeTotals[purpose] = 0;
         }
-        purposeTotals[purpose] += cost;
+        purposeTotals[purpose] += Number(cost); // Convert to number to prevent type errors
       });
-    } else {
+    } else if (payment.purposes && payment.purposes.length) {
       // Fall back to old method for backward compatibility
       const purposeCount = payment.purposes.length;
       const amountPerPurpose = payment.amount / purposeCount;
@@ -111,6 +111,12 @@ export const preparePurposeData = (payments: PaymentRequest[]) => {
         }
         purposeTotals[purpose] += amountPerPurpose;
       });
+    } else if (payment.purpose) {
+      // Single purpose case
+      if (!purposeTotals[payment.purpose]) {
+        purposeTotals[payment.purpose] = 0;
+      }
+      purposeTotals[payment.purpose] += payment.amount;
     }
   });
   

@@ -52,7 +52,8 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
             id: session.user.id,
             name: profile.full_name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
-            role: profile.role as UserRole || 'leader'
+            role: profile.role as UserRole || 'leader',
+            created_at: new Date().toISOString() // Add required field
           });
         }
       }
@@ -77,7 +78,8 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
             id: session.user.id,
             name: profile.full_name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
-            role: profile.role as UserRole || 'leader'
+            role: profile.role as UserRole || 'leader',
+            created_at: new Date().toISOString() // Add required field
           });
         }
       } else {
@@ -156,7 +158,8 @@ export const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }
             id: session.user.id,
             name: profile.full_name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
-            role: profile.role as UserRole || 'leader'
+            role: profile.role as UserRole || 'leader',
+            created_at: new Date().toISOString() // Add required field
           });
         }
       }

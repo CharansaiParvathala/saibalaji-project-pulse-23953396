@@ -1,5 +1,7 @@
+
 // User related types
-export type Role = "admin" | "owner" | "checker";
+export type Role = "admin" | "owner" | "checker" | "leader";
+export type UserRole = Role; // Alias for backward compatibility
 
 export interface User {
   id: string;
@@ -28,7 +30,7 @@ export type VehicleType = "truck" | "car" | "bike";
 
 export interface Vehicle {
   id: string;
-  vehicle_number: string;
+  vehicle_number: string;  // For backward compatibility
   manufacturer: string;
   model: string;
   vehicle_type: VehicleType;
@@ -37,6 +39,7 @@ export interface Vehicle {
   is_active: boolean;
   created_at: string;
   created_by: string;
+  registration_number?: string;  // For backward compatibility
 }
 
 // Driver related types
@@ -51,7 +54,7 @@ export interface Driver {
 }
 
 // Progress related types
-export type ProgressEntryStatus = "draft" | "submitted" | "approved" | "rejected";
+export type ProgressEntryStatus = "draft" | "submitted" | "approved" | "rejected" | "locked";
 
 export interface ProgressEntry {
   id: string;
@@ -61,17 +64,21 @@ export interface ProgressEntry {
   timeSpent: number;
   workersPresent: number;
   notes?: string;
-  photos?: string[];
+  photos?: string[] | any[];  // Updated to accept complex photo objects
   paymentRequests?: string[];
   status: ProgressEntryStatus;
   submittedBy?: string;
   submittedAt?: string;
   createdBy?: string;
   isLocked?: boolean;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  projectName?: string;  // Added for display purposes
+  userName?: string;     // Added for display purposes
 }
 
 // Payment related types
-export type PaymentRequestStatus = "pending" | "approved" | "rejected" | "paid";
+export type PaymentRequestStatus = "pending" | "approved" | "rejected" | "paid" | "scheduled";
 
 export type PaymentPurpose = 
   | "salary"
@@ -81,7 +88,10 @@ export type PaymentPurpose =
   | "maintenance"
   | "fuel"
   | "food"
-  | "other";
+  | "other"
+  | "vehicle"  // Added for backward compatibility
+  | "water"    // Added for backward compatibility
+  | "labour";  // Added for backward compatibility
 
 export interface PaymentRequest {
   id: string;
@@ -101,6 +111,11 @@ export interface PaymentRequest {
     changedAt: string;
     comments?: string;
   }[];
+  // Backward compatibility fields
+  purposes?: PaymentPurpose[];  
+  purposeCosts?: Record<string, number>;
+  photos?: any[];
+  paymentDate?: string;
 }
 
 // Notification related types
@@ -119,9 +134,26 @@ export interface Notification {
 
 // Storage Metrics type
 export interface StorageMetrics {
-  id: number;
+  id: number | string;  // Updated to accept string IDs from Supabase
   total_size: number;
   used_size: number;
   percentage_used: number;
   last_updated: string;
+}
+
+// Backup Link type
+export interface BackupLink {
+  id: string;
+  title: string;
+  url: string;
+  description?: string;
+  created_at?: string;
+  created_by?: string;
+}
+
+// Geolocation type
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
 }

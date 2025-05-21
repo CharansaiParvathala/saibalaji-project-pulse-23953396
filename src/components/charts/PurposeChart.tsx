@@ -21,9 +21,9 @@ const preparePurposeData = (payments: PaymentRequest[]) => {
         if (!purposeTotals[purpose]) {
           purposeTotals[purpose] = 0;
         }
-        purposeTotals[purpose] += cost;
+        purposeTotals[purpose] += Number(cost); // Convert to number to prevent type errors
       });
-    } else {
+    } else if (payment.purposes && payment.purposes.length) {
       // Fall back to old method for backward compatibility
       const purposeCount = payment.purposes.length;
       const amountPerPurpose = payment.amount / purposeCount;
@@ -34,6 +34,12 @@ const preparePurposeData = (payments: PaymentRequest[]) => {
         }
         purposeTotals[purpose] += amountPerPurpose;
       });
+    } else if (payment.purpose) {
+      // Single purpose case
+      if (!purposeTotals[payment.purpose]) {
+        purposeTotals[payment.purpose] = 0;
+      }
+      purposeTotals[payment.purpose] += payment.amount;
     }
   });
   

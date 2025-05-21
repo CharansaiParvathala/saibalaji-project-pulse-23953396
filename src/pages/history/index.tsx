@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +63,7 @@ export default function ReviewHistory() {
                 {format(new Date(entry.date), "MMM dd, yyyy")}
               </TableCell>
               <TableCell>{entry.projectName || "Unknown Project"}</TableCell>
-              <TableCell>{entry.userName || "Unknown User"}</TableCell>
+              <TableCell>{entry.userName || entry.submittedBy || "Unknown User"}</TableCell>
               <TableCell>
                 <Badge variant={entry.status === "rejected" ? "destructive" : "default"}>
                   {entry.status?.charAt(0).toUpperCase() + (entry.status?.slice(1) || "Unknown")}

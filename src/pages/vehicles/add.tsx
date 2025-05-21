@@ -46,6 +46,7 @@ export default function AddVehiclePage() {
       const newVehicle = {
         id: newVehicleId,
         vehicle_number: vehicleNumber,
+        registration_number: vehicleNumber, // For backward compatibility
         manufacturer,
         model,
         vehicle_type: vehicleType,
@@ -62,15 +63,15 @@ export default function AddVehiclePage() {
       // Also save to Supabase
       const { error } = await supabase.from('vehicles').insert([{
         id: newVehicleId,
-        vehicle_number: vehicleNumber,
-        manufacturer,
+        registration_number: vehicleNumber,
         model,
-        vehicle_type: vehicleType,
-        year_manufactured: yearManufactured || new Date().getFullYear(),
-        last_service_date: lastServiceDate || null,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        created_by: user?.id || null
+        manufacturer,
+        type: vehicleType,
+        additional_details: {
+          year_manufactured: yearManufactured || new Date().getFullYear(),
+          last_service_date: lastServiceDate || null
+        },
+        created_at: new Date().toISOString()
       }]);
       
       if (error) throw error;
